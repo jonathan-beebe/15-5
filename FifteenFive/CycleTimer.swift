@@ -109,6 +109,9 @@ final class CycleTimer {
         ticker = nil
         startDate = nil
         chime.stop()
+        #if os(macOS)
+        ScreenFlash.cancel()
+        #endif
         session.ended()
     }
 

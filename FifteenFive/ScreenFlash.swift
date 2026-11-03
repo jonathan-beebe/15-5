@@ -6,19 +6,32 @@ import SwiftUI
 /// click-through windows. One slow pulse stays under the WCAG 2.3.1 limit of 3 flashes per second.
 @MainActor
 enum ScreenFlash {
+    private static var windows: [NSWindow] = []
+    private static var dismissal: Task<Void, Never>?
+
     static func play(entering phase: Phase) {
+        cancel()
         let content = FluidGradient(
             phase: phase,
             start: .now,
             flows: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         )
-        let windows = NSScreen.screens.map { makeWindow(on: $0, content: content) }
+        windows = NSScreen.screens.map { makeWindow(on: $0, content: content) }
         windows.forEach { $0.orderFrontRegardless() }
 
-        Task {
+        dismissal = Task {
             try? await Task.sleep(for: .seconds(FlashEnvelope.duration))
-            windows.forEach { $0.orderOut(nil) }
+            guard !Task.isCancelled else { return }
+            cancel()
         }
+    }
+
+    /// Takes the wash down at once. Stop calls this so the wash ends with the chime.
+    static func cancel() {
+        dismissal?.cancel()
+        dismissal = nil
+        windows.forEach { $0.orderOut(nil) }
+        windows = []
     }
 
     private static func makeWindow(on screen: NSScreen, content: FluidGradient) -> NSWindow {
