@@ -132,9 +132,10 @@ final class CycleTimer {
         session.began(start: start, cycle: cycle)
         ticker?.cancel()
         ticker = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(250))
-                self?.tick()
+            // A thrown sleep means the task was cancelled. A nil self means the timer was released.
+            while (try? await Task.sleep(for: .milliseconds(250))) != nil {
+                guard let self else { return }
+                tick()
             }
         }
     }
