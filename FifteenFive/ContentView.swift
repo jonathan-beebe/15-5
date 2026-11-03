@@ -24,16 +24,16 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Button(action: timer.flipSelectedPhase) {
-                Text(phase.title)
-                    .font(.title.weight(.semibold))
-                    .foregroundStyle(titleColor)
-                    .contentShape(Rectangle())
+            // A plain label while active, so it neither dims nor reads as a button that does nothing.
+            if timer.isActive {
+                title
+            } else {
+                Button(action: timer.flipSelectedPhase) {
+                    title.contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Switches between Focus and Break")
             }
-            .buttonStyle(.plain)
-            // Not `.disabled`, which would dim the label while the timer is active.
-            .allowsHitTesting(!timer.isActive)
-            .accessibilityHint(timer.isActive ? "" : "Switches between Focus and Break")
 
             Text(Cycle.clockText(seconds: secondsRemaining))
                 .font(.system(size: 120, weight: .bold, design: .rounded))
@@ -45,14 +45,7 @@ struct ContentView: View {
                 .animation(reduceMotion ? nil : .snappy, value: secondsRemaining)
                 .sensoryFeedback(.selection, trigger: selectedDuration)
                 .adjustsMinutes(isEnabled: !timer.isActive, onChange: timer.adjustSelectedPhase)
-                .accessibilityLabel(spokenTime)
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: timer.adjustSelectedPhase(byMinutes: 1)
-                    case .decrement: timer.adjustSelectedPhase(byMinutes: -1)
-                    @unknown default: break
-                    }
-                }
+                .accessibilityRepresentation { clockAccessibility }
 
             HStack(spacing: 12) {
                 // Space belongs to whichever of Play and Pause is enabled. Two controls with the
@@ -123,6 +116,34 @@ struct ContentView: View {
         #endif
     }
 
+    private var title: some View {
+        Text(phase.title)
+            .font(.title.weight(.semibold))
+            .foregroundStyle(titleColor)
+    }
+
+    /// Stopped, the clock is the selected phase's length and VoiceOver can adjust it. Active, it
+    /// is the time remaining, read-only, and changing on its own while running.
+    @ViewBuilder private var clockAccessibility: some View {
+        if timer.isActive {
+            Text(spokenTime)
+                .accessibilityLabel(phase.title)
+                .accessibilityValue(spokenTime + " remaining")
+                .accessibilityAddTraits(timer.isRunning ? .updatesFrequently : [])
+        } else {
+            Text(spokenTime)
+                .accessibilityLabel("\(phase.title) length")
+                .accessibilityValue(spokenTime)
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: timer.adjustSelectedPhase(byMinutes: 1)
+                    case .decrement: timer.adjustSelectedPhase(byMinutes: -1)
+                    @unknown default: break
+                    }
+                }
+        }
+    }
+
     private var selectedDuration: TimeInterval {
         timer.cycle.duration(of: timer.selectedPhase)
     }
@@ -154,8 +175,7 @@ struct ContentView: View {
     }
 
     private var spokenTime: String {
-        let duration = Duration.seconds(secondsRemaining)
-        return duration.formatted(.units(allowed: [.minutes, .seconds], width: .wide)) + " remaining"
+        Duration.seconds(secondsRemaining).formatted(.units(allowed: [.minutes, .seconds], width: .wide))
     }
 }
 
