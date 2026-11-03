@@ -31,22 +31,27 @@ private struct AdjustsMinutes: ViewModifier {
     let onChange: (Int) -> Void
 
     #if os(iOS)
-    @State private var accumulator = StepAccumulator()
-    @State private var lastTranslation = 0.0
+    /// Gesture state resets when the drag ends or is cancelled, which `onEnded` does not cover.
+    @GestureState private var drag = DragProgress()
+
+    private struct DragProgress {
+        var lastTranslation = 0.0
+        var accumulator = StepAccumulator()
+        /// Whole minutes from the latest change, read by `onChanged`.
+        var steps = 0
+    }
 
     func body(content: Content) -> some View {
         content.gesture(
             DragGesture(minimumDistance: 4)
-                .onChanged { value in
+                .updating($drag) { value, drag, _ in
                     // Screen coordinates grow downward, so an upward drag is a positive delta.
-                    let delta = lastTranslation - value.translation.height
-                    lastTranslation = value.translation.height
-                    let steps = accumulator.add(delta, stepSize: pointsPerMinute)
-                    if steps != 0 { onChange(steps) }
+                    let delta = drag.lastTranslation - value.translation.height
+                    drag.lastTranslation = value.translation.height
+                    drag.steps = drag.accumulator.add(delta, stepSize: pointsPerMinute)
                 }
-                .onEnded { _ in
-                    lastTranslation = 0
-                    accumulator.reset()
+                .onChanged { _ in
+                    if drag.steps != 0 { onChange(drag.steps) }
                 },
             including: isEnabled ? .all : .none
         )
