@@ -17,9 +17,12 @@ struct FifteenFiveApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 420, height: 380)
-        #if DEBUG
-        .commands { DeveloperCommands() }
-        #endif
+        .commands {
+            TimerCommands(timer: timer)
+            #if DEBUG
+            DeveloperCommands()
+            #endif
+        }
 
         MenuBarExtra {
             MenuBarMenu(timer: timer)
