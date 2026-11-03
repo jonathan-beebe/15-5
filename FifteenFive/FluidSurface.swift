@@ -20,7 +20,7 @@ struct FluidSurface: View {
                     .float(time),
                     .color(phase.gradientColors[1]),
                     .color(phase.gradientColors[0]),
-                    .color(phase.tint),
+                    .color(phase.flowAccent),
                     .float(softness)
                 ))
         }

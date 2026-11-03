@@ -22,6 +22,15 @@ extension Phase {
         }
     }
 
+    /// The flowing gradient's brightest color. Fixed values, because the system colors change shade
+    /// with the color scheme, which shows as a jump when iOS switches scheme during the fade.
+    var flowAccent: Color {
+        switch self {
+        case .focus: Color(.sRGB, red: 0.749, green: 0.353, blue: 0.949)
+        case .rest: Color(.sRGB, red: 0.188, green: 0.820, blue: 0.345)
+        }
+    }
+
     var tint: Color {
         switch self {
         case .focus: .purple

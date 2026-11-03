@@ -1,7 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    private static let fadeDuration = 0.3
+
     let timer: CycleTimer
+
+    #if os(iOS)
+    /// True once the background has fully covered the window, so its color change stays hidden.
+    @State private var isBackgroundCovering = false
+    #endif
 
     private var phase: Phase { timer.position?.phase ?? .focus }
     private var secondsRemaining: Int {
@@ -44,10 +51,22 @@ struct ContentView: View {
                     .ignoresSafeArea()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: timer.position?.phase)
+        .animation(.easeInOut(duration: Self.fadeDuration), value: timer.position?.phase)
         #if os(iOS)
-        // Light status bar text over the full-color background.
-        .preferredColorScheme(timer.isActive ? .dark : nil)
+        // Light status bar text over the full-color background. Switching to dark changes the window
+        // color at once, so it waits for the fade in. Switching back happens at once on stop, while
+        // the background still covers the window.
+        .preferredColorScheme(timer.isActive && isBackgroundCovering ? .dark : nil)
+        .task(id: timer.isActive) {
+            guard timer.isActive else {
+                isBackgroundCovering = false
+                return
+            }
+            try? await Task.sleep(for: .seconds(Self.fadeDuration))
+            if !Task.isCancelled {
+                isBackgroundCovering = true
+            }
+        }
         .overlay {
             FlashOverlay(flashCount: timer.flashCount, tint: phase.tint)
         }
