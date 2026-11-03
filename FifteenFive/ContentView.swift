@@ -36,7 +36,6 @@ struct ContentView: View {
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
-            #if os(macOS)
             if timer.isActive {
                 // A new identity per phase crossfades the colors, which shader arguments can't animate.
                 FlowingBackground(phase: phase, timer: timer)
@@ -44,15 +43,11 @@ struct ContentView: View {
                     // Extends under the hidden title bar.
                     .ignoresSafeArea()
             }
-            #else
-            if timer.isActive {
-                phase.tint.opacity(0.12)
-                    .ignoresSafeArea()
-            }
-            #endif
         }
         .animation(.easeInOut(duration: 0.3), value: timer.position?.phase)
         #if os(iOS)
+        // Light status bar text over the full-color background.
+        .preferredColorScheme(timer.isActive ? .dark : nil)
         .overlay {
             FlashOverlay(flashCount: timer.flashCount, tint: phase.tint)
         }
@@ -77,21 +72,12 @@ struct ContentView: View {
     }
 
     private var titleColor: Color {
-        guard timer.isActive else { return .secondary }
-        #if os(macOS)
-        return .white.opacity(0.85)
-        #else
-        return phase.tint
-        #endif
+        timer.isActive ? .white.opacity(0.85) : .secondary
     }
 
     private var clockColor: Color {
-        #if os(macOS)
         // The full-color background stays dark in Light mode too.
-        return timer.isActive ? .white : .primary
-        #else
-        return .primary
-        #endif
+        timer.isActive ? .white : .primary
     }
 
     private var spokenTime: String {
@@ -100,7 +86,6 @@ struct ContentView: View {
     }
 }
 
-#if os(macOS)
 /// The screen wash's gradient, at full color.
 private struct FlowingBackground: View {
     let phase: Phase
@@ -126,7 +111,6 @@ private struct FlowingBackground: View {
         return timer.elapsed(at: date).truncatingRemainder(dividingBy: cycle.focus + cycle.rest)
     }
 }
-#endif
 
 #if os(iOS)
 private struct FlashOverlay: View {
