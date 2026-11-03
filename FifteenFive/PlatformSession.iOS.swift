@@ -7,6 +7,7 @@ import UserNotifications
 @MainActor
 final class PlatformSession {
     private static let startKey = "startDate"
+    private static let pausedElapsedKey = "pausedElapsed"
     /// iOS keeps at most 64 pending notifications per app.
     private static let maxPending = 64
 
@@ -15,6 +16,11 @@ final class PlatformSession {
     /// Scheduled notifications outlive the process, so a relaunch resumes the running session.
     var restoredStart: Date? {
         UserDefaults.standard.object(forKey: Self.startKey) as? Date
+    }
+
+    /// A paused session has no notifications, so only its elapsed time needs to survive.
+    var restoredPausedElapsed: TimeInterval? {
+        UserDefaults.standard.object(forKey: Self.pausedElapsedKey) as? TimeInterval
     }
 
     /// While backgrounded, the notification plays the sound.
@@ -28,8 +34,14 @@ final class PlatformSession {
         replaceNotifications(start: start, cycle: cycle)
     }
 
+    /// Called after `ended()`, so the start date and notifications are already gone.
+    func paused(elapsed: TimeInterval) {
+        UserDefaults.standard.set(elapsed, forKey: Self.pausedElapsedKey)
+    }
+
     func ended() {
         UserDefaults.standard.removeObject(forKey: Self.startKey)
+        UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
         UIApplication.shared.isIdleTimerDisabled = false
         replaceNotifications(start: nil, cycle: nil)
     }

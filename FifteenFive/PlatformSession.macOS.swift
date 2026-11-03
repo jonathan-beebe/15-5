@@ -8,6 +8,7 @@ final class PlatformSession {
     private var activity: NSObjectProtocol?
 
     let restoredStart: Date? = nil
+    let restoredPausedElapsed: TimeInterval? = nil
     let canAlert = true
 
     func began(start: Date, cycle: Cycle) {
@@ -17,6 +18,8 @@ final class PlatformSession {
             reason: "15-5 timer running"
         )
     }
+
+    func paused(elapsed: TimeInterval) {}
 
     func ended() {
         if let activity {

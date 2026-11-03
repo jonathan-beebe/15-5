@@ -43,6 +43,10 @@ final class CycleTimer {
             play()
         } else if let restored = session.restoredStart {
             begin(elapsed: Date.now.timeIntervalSince(restored))
+        } else if let elapsed = session.restoredPausedElapsed {
+            pausedElapsed = elapsed
+            isPaused = true
+            position = cycle.position(elapsed: elapsed)
         }
     }
 
@@ -55,9 +59,11 @@ final class CycleTimer {
     /// Holds the current time. `play()` resumes from here.
     func pause() {
         guard isRunning else { return }
-        pausedElapsed = elapsed()
+        let elapsed = elapsed()
+        pausedElapsed = elapsed
         isPaused = true
         halt()
+        session.paused(elapsed: elapsed)
     }
 
     /// Resets to the beginning of the cycle.
