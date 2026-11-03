@@ -83,6 +83,103 @@ struct CycleTimerTests {
         timer.stop()
     }
 
+    @Test func flippingWhileStoppedStartsTheOtherPhase() {
+        let timer = makeTimer()
+        timer.flipSelectedPhase()
+        #expect(timer.selectedPhase == .rest)
+        #expect(!timer.isActive)
+
+        timer.play()
+        #expect(timer.position == CyclePosition(transitionCount: 1, phase: .rest, secondsRemaining: 300))
+        timer.stop()
+    }
+
+    @Test func flippingTwiceReturnsToFocus() {
+        let timer = makeTimer()
+        timer.flipSelectedPhase()
+        timer.flipSelectedPhase()
+        #expect(timer.selectedPhase == .focus)
+    }
+
+    @Test func flippingDoesNothingWhileRunningOrPaused() {
+        let timer = makeTimer()
+        timer.play()
+        timer.flipSelectedPhase()
+        #expect(timer.selectedPhase == .focus)
+        #expect(timer.position?.phase == .focus)
+
+        timer.pause()
+        timer.flipSelectedPhase()
+        #expect(timer.selectedPhase == .focus)
+        #expect(timer.position?.phase == .focus)
+        timer.stop()
+    }
+
+    @Test func pauseAndResumeKeepTheSelectedPhase() {
+        let timer = makeTimer()
+        timer.flipSelectedPhase()
+        timer.play()
+        timer.pause()
+        timer.play()
+        #expect(timer.position?.phase == .rest)
+        timer.stop()
+    }
+
+    @Test func stopReturnsTheSelectionToFocus() {
+        let timer = makeTimer()
+        timer.flipSelectedPhase()
+        timer.play()
+        timer.stop()
+        #expect(timer.selectedPhase == .focus)
+    }
+
+    @Test func adjustingWhileStoppedChangesTheSelectedPhase() {
+        let timer = makeTimer()
+        timer.adjustSelectedPhase(byMinutes: 10)
+        #expect(timer.cycle == Cycle(focus: 25 * 60, rest: 5 * 60))
+
+        timer.flipSelectedPhase()
+        timer.adjustSelectedPhase(byMinutes: 1)
+        #expect(timer.cycle == Cycle(focus: 25 * 60, rest: 6 * 60))
+    }
+
+    @Test func playUsesTheAdjustedLength() {
+        let timer = makeTimer()
+        timer.adjustSelectedPhase(byMinutes: 10)
+        timer.play()
+        #expect(timer.position?.secondsRemaining == 25 * 60)
+        timer.stop()
+    }
+
+    @Test func adjustingDoesNothingWhileRunningOrPaused() {
+        let timer = makeTimer()
+        timer.play()
+        timer.adjustSelectedPhase(byMinutes: 5)
+        #expect(timer.cycle == .standard)
+        timer.pause()
+        timer.adjustSelectedPhase(byMinutes: 5)
+        #expect(timer.cycle == .standard)
+        timer.stop()
+    }
+
+    @Test func lengthsSurviveStop() {
+        let timer = makeTimer()
+        timer.adjustSelectedPhase(byMinutes: 10)
+        timer.play()
+        timer.stop()
+        #expect(timer.cycle.focus == 25 * 60)
+    }
+
+    @Test func adjustingSavesTheCycle() {
+        var saved: [Cycle] = []
+        var options = LaunchOptions()
+        options.saveCycle = { saved.append($0) }
+        let timer = CycleTimer(launchOptions: options)
+        timer.stop()
+        timer.adjustSelectedPhase(byMinutes: 1)
+        #expect(saved == [Cycle(focus: 16 * 60, rest: 5 * 60)])
+    }
+
     @Test func pauseWhileIdleDoesNothing() {
         let timer = makeTimer()
         timer.pause()

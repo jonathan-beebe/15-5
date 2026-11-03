@@ -10,16 +10,23 @@ struct ContentView: View {
     @State private var isBackgroundCovering = false
     #endif
 
-    private var phase: Phase { timer.position?.phase ?? .focus }
+    private var phase: Phase { timer.position?.phase ?? timer.selectedPhase }
     private var secondsRemaining: Int {
-        timer.position?.secondsRemaining ?? Int(timer.cycle.focus)
+        timer.position?.secondsRemaining ?? Int(timer.cycle.duration(of: phase))
     }
 
     var body: some View {
         VStack(spacing: 24) {
-            Text(phase.title)
-                .font(.title.weight(.semibold))
-                .foregroundStyle(titleColor)
+            Button(action: timer.flipSelectedPhase) {
+                Text(phase.title)
+                    .font(.title.weight(.semibold))
+                    .foregroundStyle(titleColor)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            // Not `.disabled`, which would dim the label while the timer is active.
+            .allowsHitTesting(!timer.isActive)
+            .accessibilityHint(timer.isActive ? "" : "Switches between Focus and Break")
 
             Text(Cycle.clockText(seconds: secondsRemaining))
                 .font(.system(size: 120, weight: .bold, design: .rounded))
@@ -27,7 +34,18 @@ struct ContentView: View {
                 .foregroundStyle(clockColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
+                .contentTransition(.numericText(value: Double(secondsRemaining)))
+                .animation(.snappy, value: selectedDuration)
+                .sensoryFeedback(.selection, trigger: selectedDuration)
+                .adjustsMinutes(isEnabled: !timer.isActive, onChange: timer.adjustSelectedPhase)
                 .accessibilityLabel(spokenTime)
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: timer.adjustSelectedPhase(byMinutes: 1)
+                    case .decrement: timer.adjustSelectedPhase(byMinutes: -1)
+                    @unknown default: break
+                    }
+                }
 
             HStack(spacing: 12) {
                 control("Play", systemImage: "play.fill", action: timer.play)
@@ -75,6 +93,10 @@ struct ContentView: View {
         #else
         .frame(minWidth: 340, minHeight: 320)
         #endif
+    }
+
+    private var selectedDuration: TimeInterval {
+        timer.cycle.duration(of: timer.selectedPhase)
     }
 
     private func control(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {

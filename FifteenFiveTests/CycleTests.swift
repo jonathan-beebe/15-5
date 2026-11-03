@@ -39,6 +39,36 @@ struct CycleTests {
     }
     #endif
 
+    @Test func adjustingChangesOnlyTheGivenPhase() {
+        #expect(cycle.adjusting(.focus, byMinutes: 5) == Cycle(focus: 20 * 60, rest: 5 * 60))
+        #expect(cycle.adjusting(.rest, byMinutes: -2) == Cycle(focus: 15 * 60, rest: 3 * 60))
+    }
+
+    @Test func adjustingStopsAtTheLimits() {
+        #expect(cycle.adjusting(.rest, byMinutes: -100).rest == 60)
+        #expect(cycle.adjusting(.focus, byMinutes: 100).focus == 60 * 60)
+    }
+
+    @Test func stepAccumulatorCarriesTheRemainder() {
+        var accumulator = StepAccumulator()
+        #expect(accumulator.add(15, stepSize: 20) == 0)
+        #expect(accumulator.add(10, stepSize: 20) == 1)
+        #expect(accumulator.add(-5, stepSize: 20) == 0)
+        #expect(accumulator.add(-20, stepSize: 20) == -1)
+        #expect(accumulator.add(45, stepSize: 20) == 2)
+    }
+
+    @Test func savedCycleRoundTrips() throws {
+        let suite = "SavedCycleTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        #expect(SavedCycle.load(from: defaults) == nil)
+        let custom = Cycle(focus: 25 * 60, rest: 10 * 60)
+        SavedCycle.save(custom, to: defaults)
+        #expect(SavedCycle.load(from: defaults) == custom)
+    }
+
     @Test func startsInFocusWithFifteenMinutes() {
         #expect(position(at: 0) == CyclePosition(transitionCount: 0, phase: .focus, secondsRemaining: 900))
     }

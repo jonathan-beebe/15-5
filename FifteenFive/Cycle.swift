@@ -23,6 +23,7 @@ struct Cycle: Equatable, Sendable {
     let rest: TimeInterval
 
     static let standard = Cycle(focus: 15 * 60, rest: 5 * 60)
+    static let minuteRange = 1 ... 60
 
     static func clockText(seconds: Int) -> String {
         String(format: "%02d:%02d", seconds / 60, seconds % 60)
@@ -35,6 +36,19 @@ struct Cycle: Equatable, Sendable {
     /// Share of the current phase that has passed, from 0 at its start.
     func fractionElapsed(of position: CyclePosition) -> Double {
         1 - Double(position.secondsRemaining) / duration(of: position.phase)
+    }
+
+    /// A copy with the phase's length changed by whole minutes, kept within `minuteRange`.
+    func adjusting(_ phase: Phase, byMinutes delta: Int) -> Cycle {
+        let current = Int((duration(of: phase) / 60).rounded())
+        let minutes = min(max(current + delta, Self.minuteRange.lowerBound), Self.minuteRange.upperBound)
+        let seconds = TimeInterval(minutes * 60)
+        return phase == .focus ? Cycle(focus: seconds, rest: rest) : Cycle(focus: focus, rest: seconds)
+    }
+
+    /// Time from the start of a cycle to the start of a phase.
+    func offset(of phase: Phase) -> TimeInterval {
+        phase == .focus ? 0 : focus
     }
 
     func position(start: Date, now: Date) -> CyclePosition {

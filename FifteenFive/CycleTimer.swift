@@ -17,20 +17,25 @@ final class CycleTimer {
     /// True while paused, so the display holds its place. False once stopped.
     private(set) var isPaused = false
 
+    /// The phase `play()` starts from. Only changes while stopped.
+    private(set) var selectedPhase = Phase.focus
+
     /// True while running or paused.
     var isActive: Bool { position != nil }
     var isRunning: Bool { isActive && !isPaused }
 
-    let cycle: Cycle
+    private(set) var cycle: Cycle
 
     @ObservationIgnored private var startDate: Date?
     @ObservationIgnored private var pausedElapsed: TimeInterval?
     @ObservationIgnored private var ticker: Task<Void, Never>?
+    @ObservationIgnored private let saveCycle: (Cycle) -> Void
     @ObservationIgnored private let chime = ChimePlayer()
     @ObservationIgnored private let session = PlatformSession()
 
     init(launchOptions: LaunchOptions = .current) {
         cycle = launchOptions.cycle
+        saveCycle = launchOptions.saveCycle
         if launchOptions.autostart {
             play()
         } else if let restored = session.restoredStart {
@@ -41,7 +46,7 @@ final class CycleTimer {
     /// Starts from the beginning, or resumes from where a pause left off.
     func play() {
         guard !isRunning else { return }
-        begin(at: Date.now.addingTimeInterval(-(pausedElapsed ?? 0)))
+        begin(at: Date.now.addingTimeInterval(-(pausedElapsed ?? cycle.offset(of: selectedPhase))))
     }
 
     /// Holds the current time. `play()` resumes from here.
@@ -54,10 +59,24 @@ final class CycleTimer {
 
     /// Resets to the beginning of the cycle.
     func stop() {
+        selectedPhase = .focus
         pausedElapsed = nil
         isPaused = false
         position = nil
         halt()
+    }
+
+    /// Switches the phase `play()` starts from. Does nothing unless stopped.
+    func flipSelectedPhase() {
+        guard !isActive else { return }
+        selectedPhase = selectedPhase == .focus ? .rest : .focus
+    }
+
+    /// Changes the selected phase's length. Does nothing unless stopped.
+    func adjustSelectedPhase(byMinutes delta: Int) {
+        guard !isActive else { return }
+        cycle = cycle.adjusting(selectedPhase, byMinutes: delta)
+        saveCycle(cycle)
     }
 
     /// Time since the start of the session, excluding pauses.
