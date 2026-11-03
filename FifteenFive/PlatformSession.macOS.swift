@@ -10,6 +10,7 @@ final class PlatformSession {
     let restoredStart: Date? = nil
     let restoredPausedElapsed: TimeInterval? = nil
     let canAlert = true
+    let notificationsDenied = false
 
     func began(start: Date, cycle: Cycle) {
         ended()

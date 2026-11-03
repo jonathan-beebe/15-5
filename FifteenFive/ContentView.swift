@@ -3,6 +3,10 @@ import SwiftUI
 struct ContentView: View {
     private static let fadeDuration = 0.3
     private static let space = KeyboardShortcut(.space, modifiers: [])
+    #if os(iOS)
+    // A constant from UIKit, so it always parses.
+    private static let notificationSettings = URL(string: UIApplication.openNotificationSettingsURLString)!
+    #endif
 
     let timer: CycleTimer
 
@@ -62,6 +66,19 @@ struct ContentView: View {
                 control("Stop", systemImage: "stop.fill", action: timer.stop)
                     .disabled(!timer.isActive)
             }
+
+            #if os(iOS)
+            if timer.isActive && timer.notificationsDenied {
+                VStack(spacing: 4) {
+                    Text("Notifications are off, so alerts stay silent while the app is in the background.")
+                    Link("Open Settings", destination: Self.notificationSettings)
+                }
+                .font(.footnote)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(titleColor)
+                .tint(clockColor)
+            }
+            #endif
         }
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -5,13 +5,18 @@ import UserNotifications
 /// iOS suspends the app in the background, so scheduled local notifications carry the sound there.
 /// With no notification delegate set, iOS does not present them while the app is in the foreground.
 @MainActor
+@Observable
 final class PlatformSession {
     private static let startKey = "startDate"
     private static let pausedElapsedKey = "pausedElapsed"
     /// iOS keeps at most 64 pending notifications per app.
     private static let maxPending = 64
 
-    private var notificationWork: Task<Void, Never>?
+    @ObservationIgnored private var notificationWork: Task<Void, Never>?
+
+    /// True once the user has denied notifications, so the app can say why background alerts
+    /// stay silent.
+    private(set) var notificationsDenied = false
 
     /// Scheduled notifications outlive the process, so a relaunch resumes the running session.
     var restoredStart: Date? {
@@ -57,8 +62,13 @@ final class PlatformSession {
             center.removeAllDeliveredNotifications()
 
             guard let start, let cycle else { return }
-            let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
-            guard granted else { return }
+            do {
+                notificationsDenied = try await !center.requestAuthorization(options: [.alert, .sound])
+            } catch {
+                logger.error("Notification authorization failed: \(error)")
+                notificationsDenied = true
+            }
+            guard !notificationsDenied else { return }
 
             let now = Date.now
             let transitions = cycle.upcomingTransitions(start: start, now: now, limit: Self.maxPending)
@@ -70,7 +80,11 @@ final class PlatformSession {
                     now: now,
                     endsQueue: index == transitions.count - 1
                 )
-                try? await center.add(request)
+                do {
+                    try await center.add(request)
+                } catch {
+                    logger.error("Scheduling a notification failed: \(error)")
+                }
             }
         }
     }

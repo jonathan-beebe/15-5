@@ -16,6 +16,9 @@ final class CycleTimer {
     /// The phase `play()` starts from. Only changes while stopped.
     private(set) var selectedPhase = Phase.focus
 
+    /// True when background alerts can't sound because the user denied notifications.
+    var notificationsDenied: Bool { session.notificationsDenied }
+
     /// True while running or paused.
     var isActive: Bool { position != nil }
     var isRunning: Bool { isActive && !isPaused }
