@@ -65,13 +65,19 @@ struct ContentView: View {
         .background {
             GrainBackground()
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
             if timer.isActive {
                 // A new identity per phase crossfades the colors, which shader arguments can't animate.
                 FlowingBackground(phase: phase, timer: timer)
                     .id(phase)
                     // Extends under the hidden title bar.
                     .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
+            #if os(macOS)
+            WindowDragArea()
+                .ignoresSafeArea()
+            #endif
         }
         .animation(.easeInOut(duration: Self.fadeDuration), value: timer.position?.phase)
         #if os(iOS)
@@ -130,6 +136,27 @@ struct ContentView: View {
         return duration.formatted(.units(allowed: [.minutes, .seconds], width: .wide)) + " remaining"
     }
 }
+
+#if os(macOS)
+/// Moves the window when a drag starts here. The window's `isMovableByWindowBackground` setting
+/// had no effect over this SwiftUI content, so this handles the drag directly.
+private struct WindowDragArea: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        WindowDragView()
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {}
+}
+
+class WindowDragView: NSView {
+    /// Lets the first click on an inactive window start a drag.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        window?.performDrag(with: event)
+    }
+}
+#endif
 
 /// The screen wash's gradient, at full color.
 private struct FlowingBackground: View {

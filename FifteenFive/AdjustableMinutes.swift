@@ -75,7 +75,8 @@ private struct ScrollCatcher: NSViewRepresentable {
     }
 }
 
-private final class ScrollCatcherView: NSView {
+/// A subclass of the window drag view, so a drag that starts on the number still moves the window.
+private final class ScrollCatcherView: WindowDragView {
     var onChange: ((Int) -> Void)?
     private var accumulator = StepAccumulator()
 
