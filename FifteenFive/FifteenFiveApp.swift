@@ -28,6 +28,11 @@ struct FifteenFiveApp: App {
             DeveloperMenu(timer: timer)
         }
         .windowResizability(.contentSize)
+
+        Window("Gradient Preview", id: GradientPreview.windowID) {
+            GradientPreview()
+        }
+        .defaultSize(width: 800, height: 500)
         #endif
         #else
         WindowGroup {

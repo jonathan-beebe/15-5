@@ -71,55 +71,40 @@ private struct FluidGradient: View {
     let start: Date
     let flows: Bool
 
-    /// Each blob traces its own path, and the differing rates keep the pattern from repeating.
-    private struct Blob {
-        let color: Color
-        let xRate, yRate, xOffset, yOffset: Double
-    }
-
-    private var blobs: [Blob] {
-        let colors = phase.gradientColors
-        return [
-            Blob(color: phase.tint, xRate: 1.1, yRate: 1.5, xOffset: 0, yOffset: 1.2),
-            Blob(color: colors[0], xRate: 1.4, yRate: 0.9, xOffset: 2.1, yOffset: 0.3),
-            Blob(color: colors[1], xRate: 0.8, yRate: 1.3, xOffset: 4.2, yOffset: 3.4),
-            Blob(color: .white.opacity(0.35), xRate: 1.7, yRate: 1.1, xOffset: 5.3, yOffset: 5.0),
-        ]
-    }
+    /// Starts each wash at a different place in the pattern.
+    private let seed = Double.random(in: 0 ..< 50)
 
     var body: some View {
-        TimelineView(.animation) { context in
+        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval)) { context in
             let elapsed = context.date.timeIntervalSince(start)
-            Canvas { graphics, size in
-                draw(in: &graphics, size: size, time: flows ? elapsed : 0)
-            }
-            .drawingGroup()
-            .opacity(FlashEnvelope.opacity(at: elapsed, pulsing: flows))
+            FluidSurface(phase: phase, time: seed + (flows ? elapsed * FluidSurface.flowRate : 0))
+                .opacity(FlashEnvelope.opacity(at: elapsed, pulsing: flows))
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }
+}
 
-    private func draw(in graphics: inout GraphicsContext, size: CGSize, time: Double) {
-        let bounds = CGRect(origin: .zero, size: size)
-        graphics.fill(Path(bounds), with: .linearGradient(
-            Gradient(colors: phase.gradientColors),
-            startPoint: .zero,
-            endPoint: CGPoint(x: 0, y: size.height)
-        ))
+/// One frame of the flowing pattern at a point in shader time.
+struct FluidSurface: View {
+    /// Shader time per second. Lower is slower.
+    static let flowRate = 0.09
+    /// The flow is slow enough that 30 fps looks smooth, at half the GPU work of 60.
+    static let frameInterval = 1.0 / 30
 
-        let radius = max(size.width, size.height) * 0.6
-        for blob in blobs {
-            let center = CGPoint(
-                x: size.width * (0.5 + 0.4 * sin(time * blob.xRate + blob.xOffset)),
-                y: size.height * (0.5 + 0.4 * sin(time * blob.yRate + blob.yOffset))
-            )
-            graphics.fill(Path(bounds), with: .radialGradient(
-                Gradient(colors: [blob.color, blob.color.opacity(0)]),
-                center: center,
-                startRadius: 0,
-                endRadius: radius
-            ))
+    let phase: Phase
+    let time: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            Rectangle()
+                .colorEffect(ShaderLibrary.fluidWash(
+                    .float2(proxy.size),
+                    .float(time),
+                    .color(phase.gradientColors[1]),
+                    .color(phase.gradientColors[0]),
+                    .color(phase.tint)
+                ))
         }
     }
 }
