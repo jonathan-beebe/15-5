@@ -35,7 +35,6 @@ final class PlatformSession {
 
     func began(start: Date, cycle: Cycle) {
         UserDefaults.standard.set(start, forKey: Self.startKey)
-        UIApplication.shared.isIdleTimerDisabled = true
         replaceNotifications(start: start, cycle: cycle)
     }
 
@@ -47,7 +46,6 @@ final class PlatformSession {
     func ended() {
         UserDefaults.standard.removeObject(forKey: Self.startKey)
         UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
-        UIApplication.shared.isIdleTimerDisabled = false
         replaceNotifications(start: nil, cycle: nil)
     }
 
