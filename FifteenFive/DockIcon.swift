@@ -1,5 +1,6 @@
 #if os(macOS)
 import AppKit
+import SwiftUI
 
 /// Replaces the Dock icon with the phase gradient, name, and time remaining while the timer runs.
 @MainActor
@@ -8,16 +9,6 @@ enum DockIcon {
     private static let canvasSize = 1024.0
     private static let tileInset = 100.0
     private static let cornerRadiusRatio = 0.2237
-    /// Focus matches the app icon gradient in scripts/make-icon.swift.
-    private static let focusGradient = NSGradient(
-        starting: NSColor(srgbRed: 0.40, green: 0.36, blue: 0.95, alpha: 1),
-        ending: NSColor(srgbRed: 0.22, green: 0.17, blue: 0.70, alpha: 1)
-    )!
-    private static let restGradient = NSGradient(
-        starting: NSColor(srgbRed: 0.16, green: 0.62, blue: 0.34, alpha: 1),
-        ending: NSColor(srgbRed: 0.06, green: 0.42, blue: 0.22, alpha: 1)
-    )!
-
     /// A light frost, so the uncovered gradient reads as the full-color state. A dark overlay reads
     /// the other way around: the brighter uncovered area looks like a layer growing over the icon.
     private static let remainingOverlay = NSColor(white: 1, alpha: 0.25)
@@ -50,7 +41,7 @@ enum DockIcon {
 
     private static func image(of position: CyclePosition, cycle: Cycle) -> NSImage {
         let elapsed = cycle.fractionElapsed(of: position)
-        let gradient = position.phase == .focus ? focusGradient : restGradient
+        let gradient = NSGradient(colors: position.phase.gradientColors.map { NSColor($0) })!
         let title = line(position.phase.title, size: 170, weight: .semibold)
         let clock = line(Cycle.clockText(seconds: position.secondsRemaining), size: 250, weight: .heavy)
 

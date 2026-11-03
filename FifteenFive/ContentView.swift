@@ -33,7 +33,21 @@ struct ContentView: View {
         }
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(timer.isRunning ? phase.tint.opacity(0.12) : .clear)
+        .background {
+            #if os(macOS)
+            if timer.isRunning {
+                // Extends under the hidden title bar.
+                LinearGradient(colors: phase.gradientColors, startPoint: .top, endPoint: .bottom)
+                    .opacity(0.25)
+                    .ignoresSafeArea()
+            }
+            #else
+            if timer.isRunning {
+                phase.tint.opacity(0.12)
+                    .ignoresSafeArea()
+            }
+            #endif
+        }
         .animation(.easeInOut(duration: 0.3), value: timer.position?.phase)
         #if os(iOS)
         .overlay {

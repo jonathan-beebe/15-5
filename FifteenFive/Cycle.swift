@@ -51,6 +51,13 @@ struct Cycle: Equatable, Sendable {
         )
     }
 
+    #if DEBUG
+    /// The earlier start date that puts `now` at the beginning of the next phase.
+    func startAdvancedToPhaseEnd(start: Date, now: Date) -> Date {
+        start.addingTimeInterval(-Double(position(start: start, now: now).secondsRemaining))
+    }
+    #endif
+
     func upcomingTransitions(start: Date, now: Date, limit: Int) -> [Transition] {
         let current = position(start: start, now: now).transitionCount
         return (current + 1 ..< current + 1 + limit).map { count in

@@ -8,6 +8,20 @@ extension Phase {
         }
     }
 
+    /// Top to bottom. Focus matches the app icon gradient in scripts/make-icon.swift.
+    var gradientColors: [Color] {
+        switch self {
+        case .focus: [
+                Color(.sRGB, red: 0.40, green: 0.36, blue: 0.95),
+                Color(.sRGB, red: 0.22, green: 0.17, blue: 0.70),
+            ]
+        case .rest: [
+                Color(.sRGB, red: 0.16, green: 0.62, blue: 0.34),
+                Color(.sRGB, red: 0.06, green: 0.42, blue: 0.22),
+            ]
+        }
+    }
+
     var tint: Color {
         switch self {
         case .focus: .purple

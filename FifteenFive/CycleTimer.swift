@@ -53,6 +53,15 @@ final class CycleTimer {
         }
     }
 
+    #if DEBUG && os(macOS)
+    /// Ends the current phase now, so the next phase and its alert begin immediately.
+    func advanceToPhaseEnd() {
+        guard let startDate else { return }
+        self.startDate = cycle.startAdvancedToPhaseEnd(start: startDate, now: .now)
+        tick()
+    }
+    #endif
+
     private func begin(at start: Date) {
         startDate = start
         position = cycle.position(start: start, now: .now)

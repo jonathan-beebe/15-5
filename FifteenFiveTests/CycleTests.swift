@@ -23,6 +23,22 @@ struct CycleTests {
         #expect(cycle.fractionElapsed(of: position(at: 1050)) == 0.5)
     }
 
+    #if DEBUG
+    @Test func advancingToPhaseEndEntersTheNextPhaseAndAlerts() {
+        let now = start.addingTimeInterval(100.5)
+        let old = position(at: 100.5)
+        let new = cycle.position(start: cycle.startAdvancedToPhaseEnd(start: start, now: now), now: now)
+        #expect(new == CyclePosition(transitionCount: 1, phase: .rest, secondsRemaining: 300))
+        #expect(cycle.shouldAlert(from: old, to: new))
+    }
+
+    @Test func advancingFromBreakEntersFocus() {
+        let now = start.addingTimeInterval(1000)
+        let new = cycle.position(start: cycle.startAdvancedToPhaseEnd(start: start, now: now), now: now)
+        #expect(new == CyclePosition(transitionCount: 2, phase: .focus, secondsRemaining: 900))
+    }
+    #endif
+
     @Test func startsInFocusWithFifteenMinutes() {
         #expect(position(at: 0) == CyclePosition(transitionCount: 0, phase: .focus, secondsRemaining: 900))
     }
