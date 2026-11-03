@@ -41,6 +41,8 @@ enum ScreenFlash {
         window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         window.ignoresMouseEvents = true
+        // Keeps the wash out of screen sharing and recordings. It is for the person at the Mac.
+        window.sharingType = .none
         window.isOpaque = false
         window.hasShadow = false
         window.backgroundColor = .clear
