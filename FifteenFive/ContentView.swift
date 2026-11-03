@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     private static let fadeDuration = 0.3
+    private static let space = KeyboardShortcut(.space, modifiers: [])
 
     let timer: CycleTimer
 
@@ -50,12 +51,14 @@ struct ContentView: View {
                 }
 
             HStack(spacing: 12) {
+                // Space belongs to whichever of Play and Pause is enabled. Two controls with the
+                // same shortcut leave the choice to SwiftUI, which is undefined for disabled ones.
                 control("Play", systemImage: "play.fill", action: timer.play)
                     .disabled(timer.isRunning)
-                    .keyboardShortcut(.space, modifiers: [])
+                    .keyboardShortcut(timer.isRunning ? nil : Self.space)
                 control("Pause", systemImage: "pause.fill", action: timer.pause)
                     .disabled(!timer.isRunning)
-                    .keyboardShortcut(.space, modifiers: [])
+                    .keyboardShortcut(timer.isRunning ? Self.space : nil)
                 control("Stop", systemImage: "stop.fill", action: timer.stop)
                     .disabled(!timer.isActive)
             }
