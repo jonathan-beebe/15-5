@@ -4,6 +4,9 @@ import SwiftUI
 
 /// Running: the phase and time remaining. Idle: an icon.
 struct MenuBarLabel: View {
+    /// Text rendered at 2x stays sharp on Retina menu bars and downsamples on others.
+    private static let retinaScale = 2.0
+
     let timer: CycleTimer
 
     var body: some View {
@@ -25,10 +28,8 @@ struct MenuBarLabel: View {
             weight: .regular
         )
         let string = NSAttributedString(string: text, attributes: [.font: font])
-        let size = string.size()
-        let image = NSImage(size: size, flipped: false) { rect in
+        let image = NSImage.rendered(size: string.size(), scale: retinaScale) { rect in
             string.draw(in: rect)
-            return true
         }
         image.isTemplate = true
         return image

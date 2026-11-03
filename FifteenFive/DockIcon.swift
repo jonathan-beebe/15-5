@@ -71,13 +71,12 @@ enum DockIcon {
     private static func idleImage(focusMinutes: Int) -> NSImage {
         // Phase.gradientColors always has two colors, so NSGradient cannot return nil.
         let gradient = NSGradient(colors: Phase.focus.gradientColors.map { NSColor($0) })!
-        return NSImage(size: NSSize(width: canvasSize, height: canvasSize), flipped: false) { canvas in
+        return NSImage.rendered(size: NSSize(width: canvasSize, height: canvasSize)) { canvas in
             let tile = canvas.insetBy(dx: tileInset, dy: tileInset)
             let radius = tile.width * cornerRadiusRatio
             gradient.draw(in: NSBezierPath(roundedRect: tile, xRadius: radius, yRadius: radius), angle: -90)
             rimGradient.draw(in: rim(of: tile, cornerRadius: radius), angle: -90)
             drawCentered("\(focusMinutes)", in: tile)
-            return true
         }
     }
 
@@ -104,7 +103,7 @@ enum DockIcon {
         let title = line(position.phase.title, size: 170, weight: .semibold)
         let clock = line(Cycle.clockText(seconds: position.secondsRemaining), size: 250, weight: .heavy)
 
-        return NSImage(size: NSSize(width: canvasSize, height: canvasSize), flipped: false) { canvas in
+        return NSImage.rendered(size: NSSize(width: canvasSize, height: canvasSize)) { canvas in
             let tile = canvas.insetBy(dx: tileInset, dy: tileInset)
             let radius = tile.width * cornerRadiusRatio
             gradient.draw(in: NSBezierPath(roundedRect: tile, xRadius: radius, yRadius: radius), angle: -90)
@@ -112,7 +111,6 @@ enum DockIcon {
             rimGradient.draw(in: rim(of: tile, cornerRadius: radius), angle: -90)
             draw(title, centeredAt: NSPoint(x: tile.midX, y: tile.midY + 130))
             draw(clock, centeredAt: NSPoint(x: tile.midX, y: tile.midY - 90))
-            return true
         }
     }
 
