@@ -144,7 +144,8 @@ struct ContentView: View {
     }
 
     private var titleColor: Color {
-        timer.isActive ? .white.opacity(0.85) : .secondary
+        // Full white: at 85% the title fell under 3:1 on the brightest parts of the Break surface.
+        timer.isActive ? .white : .secondary
     }
 
     private var clockColor: Color {
@@ -185,6 +186,7 @@ private struct FlowingBackground: View {
     let timer: CycleTimer
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var seed = Double.random(in: 0 ..< 50)
 
     var body: some View {
@@ -192,7 +194,8 @@ private struct FlowingBackground: View {
             FluidSurface(
                 phase: phase,
                 time: seed + flowElapsed * FluidSurface.flowRate,
-                softness: 0.5
+                // Increase Contrast flattens the surface toward its average color.
+                softness: contrast == .increased ? 0.8 : 0.5
             )
         }
         .accessibilityHidden(true)

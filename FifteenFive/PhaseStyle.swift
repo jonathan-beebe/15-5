@@ -16,18 +16,19 @@ extension Phase {
                 Color(.sRGB, red: 0.22, green: 0.17, blue: 0.70),
             ]
         case .rest: [
-                Color(.sRGB, red: 0.16, green: 0.62, blue: 0.34),
-                Color(.sRGB, red: 0.06, green: 0.42, blue: 0.22),
+                Color(.sRGB, red: 0.12, green: 0.54, blue: 0.29),
+                Color(.sRGB, red: 0.05, green: 0.36, blue: 0.19),
             ]
         }
     }
 
     /// The flowing gradient's brightest color. Fixed values, because the system colors change shade
     /// with the color scheme, which shows as a jump when iOS switches scheme during the fade.
+    /// Each keeps white text at 3.5:1 or better, so the blended surface clears WCAG's 3:1.
     var flowAccent: Color {
         switch self {
         case .focus: Color(.sRGB, red: 0.749, green: 0.353, blue: 0.949)
-        case .rest: Color(.sRGB, red: 0.188, green: 0.820, blue: 0.345)
+        case .rest: Color(.sRGB, red: 0.13, green: 0.62, blue: 0.28)
         }
     }
 
