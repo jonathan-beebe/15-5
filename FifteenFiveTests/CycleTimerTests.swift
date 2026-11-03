@@ -4,10 +4,61 @@ import Testing
 
 @MainActor
 struct CycleTimerTests {
-    private func makeTimer() -> CycleTimer {
-        let timer = CycleTimer(launchOptions: LaunchOptions())
+    private let session = RecordingSession()
+
+    private func makeTimer(_ options: LaunchOptions = LaunchOptions()) -> CycleTimer {
+        CycleTimer(launchOptions: options, session: session)
+    }
+
+    @Test func playPauseAndStopTellTheSession() {
+        let timer = makeTimer()
+        timer.play()
+        timer.pause()
         timer.stop()
-        return timer
+
+        #expect(session.events.count == 4)
+        if case .began(_, let cycle) = session.events[0] { #expect(cycle == .standard) } else { Issue.record("no began") }
+        #expect(session.events[1] == .ended)
+        if case .paused(let elapsed) = session.events[2] { #expect(elapsed < 1) } else { Issue.record("no paused") }
+        #expect(session.events[3] == .ended)
+    }
+
+    @Test func restoresARunningSession() {
+        session.restoredStart = Date.now.addingTimeInterval(-100)
+        let timer = makeTimer()
+        #expect(timer.isRunning)
+        #expect(timer.position?.phase == .focus)
+        #expect(timer.position?.secondsRemaining == 800)
+        timer.stop()
+    }
+
+    @Test func restoresAPausedSession() {
+        session.restoredPausedElapsed = 950
+        let timer = makeTimer()
+        #expect(timer.isPaused)
+        #expect(!timer.isRunning)
+        #expect(timer.position == CyclePosition(transitionCount: 1, phase: .rest, secondsRemaining: 250))
+        #expect(timer.elapsed() == 950)
+        #expect(session.events.isEmpty)
+    }
+
+    @Test func aPhaseChangeAlertsOnce() async throws {
+        let timer = makeTimer(LaunchOptions(cycle: Cycle(focus: 1, rest: 1), autostart: true))
+        try await Task.sleep(for: .seconds(1.4))
+        #expect(timer.position?.phase == .rest)
+        #expect(timer.flashCount == 1)
+        #expect(session.events.filter { $0 == .alert(.rest) }.count == 1)
+        timer.stop()
+    }
+
+    @Test func aPhaseChangeIsSilentWhenTheSessionCannotAlert() async throws {
+        session.canAlert = false
+        let timer = makeTimer(LaunchOptions(cycle: Cycle(focus: 1, rest: 1), autostart: true))
+        try await Task.sleep(for: .seconds(1.4))
+        #expect(timer.position?.phase == .rest)
+        #expect(timer.flashCount == 0)
+        #expect(!session.events.contains(.alert(.rest)))
+        timer.stop()
     }
 
     @Test func playThenStopReturnsToIdle() {

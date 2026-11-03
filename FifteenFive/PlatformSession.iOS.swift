@@ -6,13 +6,14 @@ import UserNotifications
 /// With no notification delegate set, iOS does not present them while the app is in the foreground.
 @MainActor
 @Observable
-final class PlatformSession {
+final class PlatformSession: TimerSession {
     private static let startKey = "startDate"
     private static let pausedElapsedKey = "pausedElapsed"
     /// iOS keeps at most 64 pending notifications per app.
     private static let maxPending = 64
 
     @ObservationIgnored private var notificationWork: Task<Void, Never>?
+    @ObservationIgnored private let chime = ChimePlayer()
 
     /// True once the user has denied notifications, so the app can say why background alerts
     /// stay silent.
@@ -46,7 +47,12 @@ final class PlatformSession {
     func ended() {
         UserDefaults.standard.removeObject(forKey: Self.startKey)
         UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
+        chime.stop()
         replaceNotifications(start: nil, cycle: nil)
+    }
+
+    func alert(entering phase: Phase) {
+        chime.play()
     }
 
     /// Runs after the previous replacement finishes, so a quick stop/start cannot interleave.

@@ -35,12 +35,12 @@ final class CycleTimer {
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let saveCycle: (Cycle) -> Void
     @ObservationIgnored private var pendingDockIconUpdate: Task<Void, Never>?
-    @ObservationIgnored private let chime = ChimePlayer()
-    @ObservationIgnored private let session = PlatformSession()
+    @ObservationIgnored private let session: any TimerSession
 
-    init(launchOptions: LaunchOptions = .current) {
+    init(launchOptions: LaunchOptions = .current, session: any TimerSession = PlatformSession()) {
         cycle = launchOptions.cycle
         saveCycle = launchOptions.saveCycle
+        self.session = session
         updateDockIcon()
         if launchOptions.autostart {
             play()
@@ -127,10 +127,6 @@ final class CycleTimer {
         ticker?.cancel()
         ticker = nil
         startInstant = nil
-        chime.stop()
-        #if os(macOS)
-        ScreenFlash.cancel()
-        #endif
         session.ended()
     }
 
@@ -171,10 +167,7 @@ final class CycleTimer {
 
     private func alert(entering phase: Phase) {
         flashCount += 1
-        chime.play()
-        #if os(macOS)
-        ScreenFlash.play(entering: phase)
-        #endif
+        session.alert(entering: phase)
     }
 }
 
