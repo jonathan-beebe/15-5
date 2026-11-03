@@ -16,6 +16,13 @@ struct CycleTests {
         #expect(Cycle.clockText(seconds: 0) == "00:00")
     }
 
+    @Test func fractionElapsedIsRelativeToTheCurrentPhase() {
+        #expect(cycle.fractionElapsed(of: position(at: 0)) == 0)
+        #expect(cycle.fractionElapsed(of: position(at: 450)) == 0.5)
+        #expect(cycle.fractionElapsed(of: position(at: 900)) == 0)
+        #expect(cycle.fractionElapsed(of: position(at: 1050)) == 0.5)
+    }
+
     @Test func startsInFocusWithFifteenMinutes() {
         #expect(position(at: 0) == CyclePosition(transitionCount: 0, phase: .focus, secondsRemaining: 900))
     }

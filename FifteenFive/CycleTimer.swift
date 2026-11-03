@@ -7,7 +7,7 @@ final class CycleTimer {
     private(set) var position: CyclePosition? {
         didSet {
             #if os(macOS)
-            DockIcon.show(position)
+            DockIcon.show(position, cycle: cycle)
             #endif
         }
     }

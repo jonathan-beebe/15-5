@@ -32,6 +32,11 @@ struct Cycle: Equatable, Sendable {
         phase == .focus ? focus : rest
     }
 
+    /// Share of the current phase that has passed, from 0 at its start.
+    func fractionElapsed(of position: CyclePosition) -> Double {
+        1 - Double(position.secondsRemaining) / duration(of: position.phase)
+    }
+
     func position(start: Date, now: Date) -> CyclePosition {
         let total = focus + rest
         let elapsed = max(0, now.timeIntervalSince(start))
