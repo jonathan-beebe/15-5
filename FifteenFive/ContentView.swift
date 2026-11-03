@@ -163,10 +163,11 @@ private struct FlowingBackground: View {
     let phase: Phase
     let timer: CycleTimer
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var seed = Double.random(in: 0 ..< 50)
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval, paused: timer.isPaused)) { context in
+        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval, paused: timer.isPaused || reduceMotion)) { context in
             FluidSurface(
                 phase: phase,
                 time: seed + flowElapsed(at: context.date) * FluidSurface.flowRate,
