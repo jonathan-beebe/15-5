@@ -5,6 +5,8 @@ struct ContentView: View {
 
     let timer: CycleTimer
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     #if os(iOS)
     /// True once the background has fully covered the window, so its color change stays hidden.
     @State private var isBackgroundCovering = false
@@ -35,7 +37,7 @@ struct ContentView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
                 .contentTransition(.numericText(value: Double(secondsRemaining)))
-                .animation(.snappy, value: selectedDuration)
+                .animation(reduceMotion ? nil : .snappy, value: secondsRemaining)
                 .sensoryFeedback(.selection, trigger: selectedDuration)
                 .adjustsMinutes(isEnabled: !timer.isActive, onChange: timer.adjustSelectedPhase)
                 .accessibilityLabel(spokenTime)
