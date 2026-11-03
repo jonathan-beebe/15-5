@@ -12,11 +12,12 @@ struct ContentView: View {
         VStack(spacing: 24) {
             Text(phase.title)
                 .font(.title.weight(.semibold))
-                .foregroundStyle(timer.isRunning ? phase.tint : .secondary)
+                .foregroundStyle(titleColor)
 
             Text(Cycle.clockText(seconds: secondsRemaining))
                 .font(.system(size: 120, weight: .bold, design: .rounded))
                 .monospacedDigit()
+                .foregroundStyle(clockColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
                 .accessibilityLabel(spokenTime)
@@ -36,9 +37,10 @@ struct ContentView: View {
         .background {
             #if os(macOS)
             if timer.isRunning {
-                // Extends under the hidden title bar.
-                LinearGradient(colors: phase.gradientColors, startPoint: .top, endPoint: .bottom)
-                    .opacity(0.25)
+                // A new identity per phase crossfades the colors, which shader arguments can't animate.
+                FlowingBackground(phase: phase)
+                    .id(phase)
+                    // Extends under the hidden title bar.
                     .ignoresSafeArea()
             }
             #else
@@ -58,11 +60,51 @@ struct ContentView: View {
         #endif
     }
 
+    private var titleColor: Color {
+        guard timer.isRunning else { return .secondary }
+        #if os(macOS)
+        return .white.opacity(0.85)
+        #else
+        return phase.tint
+        #endif
+    }
+
+    private var clockColor: Color {
+        #if os(macOS)
+        // The full-color background stays dark in Light mode too.
+        return timer.isRunning ? .white : .primary
+        #else
+        return .primary
+        #endif
+    }
+
     private var spokenTime: String {
         let duration = Duration.seconds(secondsRemaining)
         return duration.formatted(.units(allowed: [.minutes, .seconds], width: .wide)) + " remaining"
     }
 }
+
+#if os(macOS)
+/// The screen wash's gradient, at full color.
+private struct FlowingBackground: View {
+    let phase: Phase
+
+    /// Measuring from the view's creation keeps shader time small, which keeps float math precise.
+    @State private var start = Date.now
+    @State private var seed = Double.random(in: 0 ..< 50)
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval)) { context in
+            FluidSurface(
+                phase: phase,
+                time: seed + context.date.timeIntervalSince(start) * FluidSurface.flowRate,
+                softness: 0.5
+            )
+        }
+        .accessibilityHidden(true)
+    }
+}
+#endif
 
 #if os(iOS)
 private struct FlashOverlay: View {

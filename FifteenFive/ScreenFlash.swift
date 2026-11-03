@@ -94,6 +94,8 @@ struct FluidSurface: View {
 
     let phase: Phase
     let time: Double
+    /// From 0 for the full color range to 1 for a flat average color.
+    var softness = 0.0
 
     var body: some View {
         GeometryReader { proxy in
@@ -103,7 +105,8 @@ struct FluidSurface: View {
                     .float(time),
                     .color(phase.gradientColors[1]),
                     .color(phase.gradientColors[0]),
-                    .color(phase.tint)
+                    .color(phase.tint),
+                    .float(softness)
                 ))
         }
     }

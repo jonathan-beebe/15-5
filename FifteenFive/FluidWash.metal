@@ -51,7 +51,8 @@ constant float grainAmount = 0.02;
     float time,
     half4 deep,
     half4 middle,
-    half4 bright
+    half4 bright,
+    float softness
 ) {
     float2 p = position / max(size.x, size.y) * 1.4;
 
@@ -67,6 +68,10 @@ constant float grainAmount = 0.02;
 
     half3 result = mix(deep.rgb, middle.rgb, half(smoothstep(0.15, 0.6, f)));
     result = mix(result, bright.rgb, half(smoothstep(0.2, 0.7, length(q) * 0.75)));
+    // Pulls every color toward the palette's average, which narrows the bright-to-dark range.
+    half3 average = (deep.rgb + middle.rgb + bright.rgb) / 3.0;
+    result = mix(result, average, half(softness));
+
     // Depends on position alone, so the grain stays still while the color flows beneath it.
     result += half((grainHash(position) * 2.0 - 1.0) * grainAmount);
     return half4(result, 1.0);
