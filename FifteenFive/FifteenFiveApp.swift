@@ -6,6 +6,10 @@ struct FifteenFiveApp: App {
 
     @State private var timer = CycleTimer()
 
+    #if os(iOS)
+    @Environment(\.scenePhase) private var scenePhase
+    #endif
+
     var body: some Scene {
         #if os(macOS)
         Window("15-5", id: Self.mainWindowID) {
@@ -37,6 +41,9 @@ struct FifteenFiveApp: App {
         #else
         WindowGroup {
             ContentView(timer: timer)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { timer.refreshAlerts() }
         }
         #endif
     }

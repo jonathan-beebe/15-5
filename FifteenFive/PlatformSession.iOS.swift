@@ -61,26 +61,40 @@ final class PlatformSession {
             guard granted else { return }
 
             let now = Date.now
-            for transition in cycle.upcomingTransitions(start: start, now: now, limit: Self.maxPending) {
+            let transitions = cycle.upcomingTransitions(start: start, now: now, limit: Self.maxPending)
+            for (index, transition) in transitions.enumerated() {
                 guard !Task.isCancelled else { return }
-                try? await center.add(Self.request(for: transition, cycle: cycle, now: now))
+                let request = Self.request(
+                    for: transition,
+                    cycle: cycle,
+                    now: now,
+                    endsQueue: index == transitions.count - 1
+                )
+                try? await center.add(request)
             }
         }
     }
 
-    /// The text names the length of the phase being entered, which the user can change.
-    nonisolated static func body(entering phase: Phase, cycle: Cycle) -> String {
+    /// The text names the length of the phase being entered, which the user can change. The last
+    /// notification in the queue asks for a visit, which refills the queue.
+    nonisolated static func body(entering phase: Phase, cycle: Cycle, endsQueue: Bool = false) -> String {
         let minutes = Int((cycle.duration(of: phase) / 60).rounded())
-        return switch phase {
+        let body = switch phase {
         case .focus: "Break is over. \(minutes) \(minutes == 1 ? "minute" : "minutes") of focus."
         case .rest: "Focus is over. \(minutes)-minute break."
         }
+        return endsQueue ? body + " Open 15-5 to keep the alerts coming." : body
     }
 
-    private static func request(for transition: Transition, cycle: Cycle, now: Date) -> UNNotificationRequest {
+    private static func request(
+        for transition: Transition,
+        cycle: Cycle,
+        now: Date,
+        endsQueue: Bool
+    ) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
         content.title = transition.entering.title
-        content.body = body(entering: transition.entering, cycle: cycle)
+        content.body = body(entering: transition.entering, cycle: cycle, endsQueue: endsQueue)
         content.sound = UNNotificationSound(named: UNNotificationSoundName(ChimePlayer.fileName))
         let trigger = UNTimeIntervalNotificationTrigger(
             timeInterval: transition.date.timeIntervalSince(now),

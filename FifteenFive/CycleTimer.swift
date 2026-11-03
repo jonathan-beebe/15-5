@@ -88,6 +88,12 @@ final class CycleTimer {
         saveCycle(cycle)
     }
 
+    /// iOS keeps at most 64 pending notifications, so each return to the foreground refills them.
+    func refreshAlerts() {
+        guard isRunning else { return }
+        session.began(start: Date.now.addingTimeInterval(-elapsed()), cycle: cycle)
+    }
+
     /// Time since the start of the session, excluding pauses.
     func elapsed() -> TimeInterval {
         if let pausedElapsed { return pausedElapsed }

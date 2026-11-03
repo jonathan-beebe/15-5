@@ -27,6 +27,11 @@ struct PlatformSessionTests {
         #expect(PlatformSession.body(entering: .rest, cycle: cycle) == "Focus is over. 10-minute break.")
     }
 
+    @Test func lastNotificationInTheQueueAsksForAVisit() {
+        let body = PlatformSession.body(entering: .rest, cycle: .standard, endsQueue: true)
+        #expect(body == "Focus is over. 5-minute break. Open 15-5 to keep the alerts coming.")
+    }
+
     @Test func notificationBodyUsesSingularForOneMinute() {
         let cycle = Cycle(focus: 60, rest: 60)
         #expect(PlatformSession.body(entering: .focus, cycle: cycle) == "Break is over. 1 minute of focus.")
