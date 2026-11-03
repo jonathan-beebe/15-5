@@ -112,8 +112,9 @@ struct ContentView: View {
             Label(title, systemImage: systemImage)
                 .labelStyle(.iconOnly)
                 .font(.title2)
+                // At least the HIG's 44 pt minimum target, on both platforms.
                 .frame(width: 56)
-                .padding(.vertical, 6)
+                .frame(minHeight: 44)
                 // Keeps the whole area clickable with no background.
                 .contentShape(Rectangle())
         }
