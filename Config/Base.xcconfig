@@ -1,0 +1,7 @@
+// Defaults for a fresh clone. Set your own values in Local.xcconfig, which overrides these.
+// See Local.example.xcconfig.
+
+APP_BUNDLE_ID = com.example.fifteenfive
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"
