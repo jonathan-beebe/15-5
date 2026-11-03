@@ -51,21 +51,24 @@ final class PlatformSession {
             let now = Date.now
             for transition in cycle.upcomingTransitions(start: start, now: now, limit: Self.maxPending) {
                 guard !Task.isCancelled else { return }
-                try? await center.add(Self.request(for: transition, now: now))
+                try? await center.add(Self.request(for: transition, cycle: cycle, now: now))
             }
         }
     }
 
-    private static func request(for transition: Transition, now: Date) -> UNNotificationRequest {
-        let content = UNMutableNotificationContent()
-        switch transition.entering {
-        case .focus:
-            content.title = "Focus"
-            content.body = "Break is over. 15 minutes of focus."
-        case .rest:
-            content.title = "Break"
-            content.body = "Focus is over. 5 minute break."
+    /// The text names the length of the phase being entered, which the user can change.
+    nonisolated static func body(entering phase: Phase, cycle: Cycle) -> String {
+        let minutes = Int((cycle.duration(of: phase) / 60).rounded())
+        return switch phase {
+        case .focus: "Break is over. \(minutes) \(minutes == 1 ? "minute" : "minutes") of focus."
+        case .rest: "Focus is over. \(minutes)-minute break."
         }
+    }
+
+    private static func request(for transition: Transition, cycle: Cycle, now: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = transition.entering.title
+        content.body = body(entering: transition.entering, cycle: cycle)
         content.sound = UNNotificationSound(named: UNNotificationSoundName(ChimePlayer.fileName))
         let trigger = UNTimeIntervalNotificationTrigger(
             timeInterval: transition.date.timeIntervalSince(now),
