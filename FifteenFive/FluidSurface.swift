@@ -26,3 +26,18 @@ struct FluidSurface: View {
         }
     }
 }
+
+/// The app's default texture: still grain over the system background.
+struct GrainBackground: View {
+    var body: some View {
+        ZStack {
+            #if os(iOS)
+            // The default iOS background is pure black or white, which hides half the grain or more.
+            Color(uiColor: .secondarySystemBackground)
+            #endif
+            Rectangle()
+                .colorEffect(ShaderLibrary.grainOverlay())
+        }
+        .accessibilityHidden(true)
+    }
+}

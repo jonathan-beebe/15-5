@@ -43,6 +43,8 @@ struct ContentView: View {
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
+            GrainBackground()
+                .ignoresSafeArea()
             if timer.isActive {
                 // A new identity per phase crossfades the colors, which shader arguments can't animate.
                 FlowingBackground(phase: phase, timer: timer)

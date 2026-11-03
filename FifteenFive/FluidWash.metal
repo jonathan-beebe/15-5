@@ -42,6 +42,13 @@ static float grainHash(float2 p) {
 /// Peak brightness change from the grain.
 constant float grainAmount = 0.02;
 
+/// A translucent layer of the same grain, for any background. Output is premultiplied: white
+/// brightens, black darkens, so it works in both Light and Dark mode.
+[[stitchable]] half4 grainOverlay(float2 position, half4 color) {
+    float grain = (grainHash(position) * 2.0 - 1.0) * grainAmount;
+    return grain > 0.0 ? half4(half(grain)) : half4(0.0, 0.0, 0.0, half(-grain));
+}
+
 /// Domain warping: noise displaces the input to more noise, which folds the pattern into
 /// currents. `time` moves each layer at its own rate, so the currents drift through each other.
 [[stitchable]] half4 fluidWash(
