@@ -41,7 +41,14 @@ struct MenuBarMenu: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Button(timer.isRunning ? "Stop" : "Start", action: timer.toggle)
+        if timer.isRunning {
+            Button("Pause", action: timer.pause)
+        } else {
+            Button("Play", action: timer.play)
+        }
+        if timer.isActive {
+            Button("Stop", action: timer.stop)
+        }
 
         Button("Show Window") {
             openWindow(id: FifteenFiveApp.mainWindowID)
