@@ -3,6 +3,7 @@ import AppKit
 import SwiftUI
 
 /// Replaces the Dock icon with the phase gradient, name, and time remaining while the timer runs.
+/// While stopped, it shows the focus length, or the bundle icon at the standard length.
 @MainActor
 enum DockIcon {
     /// macOS icon grid: the tile is 824/1024 of the canvas with a 22.37% corner radius.
@@ -34,9 +35,63 @@ enum DockIcon {
         colorSpace: .sRGB
     )!
 
-    /// Passing nil restores the app's bundle icon.
+    /// nil shows the app's bundle icon.
+    private static var current: NSImage?
+
+    /// AppKit resets the icon as it finishes launching, which would drop one set before that.
+    private static let reapplyAfterLaunch: Void = {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didFinishLaunchingNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { apply() }
+        }
+    }()
+
     static func show(_ position: CyclePosition?, cycle: Cycle) {
-        NSApplication.shared.applicationIconImage = position.map { image(of: $0, cycle: cycle) }
+        _ = reapplyAfterLaunch
+        if let position {
+            current = image(of: position, cycle: cycle)
+        } else if cycle.focus == Cycle.standard.focus {
+            current = nil
+        } else {
+            current = idleImage(focusMinutes: Int((cycle.focus / 60).rounded()))
+        }
+        apply()
+    }
+
+    private static func apply() {
+        NSApplication.shared.applicationIconImage = current
+    }
+
+    /// Matches the layout of the bundle icon in scripts/make-icon.swift.
+    private static func idleImage(focusMinutes: Int) -> NSImage {
+        let gradient = NSGradient(colors: Phase.focus.gradientColors.map { NSColor($0) })!
+        return NSImage(size: NSSize(width: canvasSize, height: canvasSize), flipped: false) { canvas in
+            let tile = canvas.insetBy(dx: tileInset, dy: tileInset)
+            let radius = tile.width * cornerRadiusRatio
+            gradient.draw(in: NSBezierPath(roundedRect: tile, xRadius: radius, yRadius: radius), angle: -90)
+            rimGradient.draw(in: rim(of: tile, cornerRadius: radius), angle: -90)
+            drawCentered("\(focusMinutes)", in: tile)
+            return true
+        }
+    }
+
+    private static func drawCentered(_ text: String, in tile: NSRect) {
+        let base = NSFont.systemFont(ofSize: tile.width * 0.60, weight: .heavy)
+        let font = base.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: base.pointSize) } ?? base
+        let string = NSAttributedString(string: text, attributes: [
+            .font: font,
+            .foregroundColor: NSColor.white,
+            .kern: -tile.width * 0.015,
+            .shadow: textShadow,
+        ])
+        let line = CTLineCreateWithAttributedString(string)
+        let glyphs = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        context.textPosition = CGPoint(x: tile.midX - glyphs.midX, y: tile.midY - glyphs.midY)
+        CTLineDraw(line, context)
     }
 
     private static func image(of position: CyclePosition, cycle: Cycle) -> NSImage {
