@@ -14,14 +14,14 @@ struct ContentView: View {
                 .font(.title.weight(.semibold))
                 .foregroundStyle(timer.isRunning ? phase.tint : .secondary)
 
-            Text(clockText)
+            Text(Cycle.clockText(seconds: secondsRemaining))
                 .font(.system(size: 120, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
                 .accessibilityLabel(spokenTime)
 
-            Button(action: toggle) {
+            Button(action: timer.toggle) {
                 Text(timer.isRunning ? "Stop" : "Start")
                     .font(.title2.weight(.semibold))
                     .frame(minWidth: 140)
@@ -44,21 +44,9 @@ struct ContentView: View {
         #endif
     }
 
-    private var clockText: String {
-        String(format: "%02d:%02d", secondsRemaining / 60, secondsRemaining % 60)
-    }
-
     private var spokenTime: String {
         let duration = Duration.seconds(secondsRemaining)
         return duration.formatted(.units(allowed: [.minutes, .seconds], width: .wide)) + " remaining"
-    }
-
-    private func toggle() {
-        if timer.isRunning {
-            timer.stop()
-        } else {
-            timer.start()
-        }
     }
 }
 

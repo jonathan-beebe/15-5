@@ -24,6 +24,10 @@ struct Cycle: Equatable, Sendable {
 
     static let standard = Cycle(focus: 15 * 60, rest: 5 * 60)
 
+    static func clockText(seconds: Int) -> String {
+        String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
+
     func duration(of phase: Phase) -> TimeInterval {
         phase == .focus ? focus : rest
     }

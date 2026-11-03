@@ -10,7 +10,7 @@ extension Phase {
 
     var tint: Color {
         switch self {
-        case .focus: .indigo
+        case .focus: .purple
         case .rest: .green
         }
     }

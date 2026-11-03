@@ -10,6 +10,12 @@ struct CycleTests {
         cycle.position(start: start, now: start.addingTimeInterval(seconds))
     }
 
+    @Test func clockTextPadsMinutesAndSeconds() {
+        #expect(Cycle.clockText(seconds: 900) == "15:00")
+        #expect(Cycle.clockText(seconds: 65) == "01:05")
+        #expect(Cycle.clockText(seconds: 0) == "00:00")
+    }
+
     @Test func startsInFocusWithFifteenMinutes() {
         #expect(position(at: 0) == CyclePosition(transitionCount: 0, phase: .focus, secondsRemaining: 900))
     }

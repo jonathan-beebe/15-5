@@ -4,7 +4,13 @@ import Observation
 @MainActor
 @Observable
 final class CycleTimer {
-    private(set) var position: CyclePosition?
+    private(set) var position: CyclePosition? {
+        didSet {
+            #if os(macOS)
+            DockIcon.show(position)
+            #endif
+        }
+    }
     /// Increments on each alert. The iOS flash overlay animates when this changes.
     private(set) var flashCount = 0
 
@@ -37,6 +43,14 @@ final class CycleTimer {
         position = nil
         chime.stop()
         session.ended()
+    }
+
+    func toggle() {
+        if isRunning {
+            stop()
+        } else {
+            start()
+        }
     }
 
     private func begin(at start: Date) {
