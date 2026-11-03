@@ -24,6 +24,7 @@ enum DockIcon {
 
     /// macOS adds the rim highlight to bundle icons only, so a runtime image has to draw its own.
     private static let rimWidth = 10.0
+    // NSGradient returns nil only for an empty color list. Every list here has at least two colors.
     private static let rimGradient = NSGradient(
         colors: [
             NSColor(white: 1, alpha: 0.45),
@@ -45,6 +46,7 @@ enum DockIcon {
             object: nil,
             queue: .main
         ) { _ in
+            // The observer is queued on main, so this runs on the main actor.
             MainActor.assumeIsolated { apply() }
         }
     }()
@@ -67,6 +69,7 @@ enum DockIcon {
 
     /// Matches the layout of the bundle icon in scripts/make-icon.swift.
     private static func idleImage(focusMinutes: Int) -> NSImage {
+        // Phase.gradientColors always has two colors, so NSGradient cannot return nil.
         let gradient = NSGradient(colors: Phase.focus.gradientColors.map { NSColor($0) })!
         return NSImage(size: NSSize(width: canvasSize, height: canvasSize), flipped: false) { canvas in
             let tile = canvas.insetBy(dx: tileInset, dy: tileInset)
@@ -96,6 +99,7 @@ enum DockIcon {
 
     private static func image(of position: CyclePosition, cycle: Cycle) -> NSImage {
         let elapsed = cycle.fractionElapsed(of: position)
+        // Phase.gradientColors always has two colors, so NSGradient cannot return nil.
         let gradient = NSGradient(colors: position.phase.gradientColors.map { NSColor($0) })!
         let title = line(position.phase.title, size: 170, weight: .semibold)
         let clock = line(Cycle.clockText(seconds: position.secondsRemaining), size: 250, weight: .heavy)
