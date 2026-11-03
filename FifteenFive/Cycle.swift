@@ -52,8 +52,13 @@ struct Cycle: Equatable, Sendable {
     }
 
     func position(start: Date, now: Date) -> CyclePosition {
+        position(elapsed: now.timeIntervalSince(start))
+    }
+
+    /// The position `elapsed` seconds into a session that began at the start of a focus phase.
+    func position(elapsed: TimeInterval) -> CyclePosition {
         let total = focus + rest
-        let elapsed = max(0, now.timeIntervalSince(start))
+        let elapsed = max(0, elapsed)
         let completedCycles = (elapsed / total).rounded(.down)
         let offset = elapsed - completedCycles * total
         let phase: Phase = offset < focus ? .focus : .rest
@@ -64,13 +69,6 @@ struct Cycle: Equatable, Sendable {
             secondsRemaining: Int((phaseEnd - offset).rounded(.up))
         )
     }
-
-    #if DEBUG
-    /// The earlier start date that puts `now` at the beginning of the next phase.
-    func startAdvancedToPhaseEnd(start: Date, now: Date) -> Date {
-        start.addingTimeInterval(-Double(position(start: start, now: now).secondsRemaining))
-    }
-    #endif
 
     func upcomingTransitions(start: Date, now: Date, limit: Int) -> [Transition] {
         let current = position(start: start, now: now).transitionCount

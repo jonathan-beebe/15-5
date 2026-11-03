@@ -174,7 +174,7 @@ private struct FlowingBackground: View {
         TimelineView(.animation(minimumInterval: FluidSurface.frameInterval, paused: timer.isPaused || reduceMotion)) { context in
             FluidSurface(
                 phase: phase,
-                time: seed + flowElapsed(at: context.date) * FluidSurface.flowRate,
+                time: seed + flowElapsed * FluidSurface.flowRate,
                 softness: 0.5
             )
         }
@@ -183,9 +183,9 @@ private struct FlowingBackground: View {
 
     /// Follows the timer, so the flow holds during a pause and continues without a jump. Wrapping
     /// each cycle keeps shader time small for float precision, and the wrap lands on a crossfade.
-    private func flowElapsed(at date: Date) -> TimeInterval {
+    private var flowElapsed: TimeInterval {
         let cycle = timer.cycle
-        return timer.elapsed(at: date).truncatingRemainder(dividingBy: cycle.focus + cycle.rest)
+        return timer.elapsed().truncatingRemainder(dividingBy: cycle.focus + cycle.rest)
     }
 }
 

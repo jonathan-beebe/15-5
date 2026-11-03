@@ -24,7 +24,10 @@ final class CycleTimer {
         didSet { scheduleDockIconUpdate() }
     }
 
-    @ObservationIgnored private var startDate: Date?
+    /// Elapsed time comes from the continuous clock, which keeps counting through sleep and holds
+    /// still through wall-clock changes. The wall-clock date is kept only for the session to persist.
+    @ObservationIgnored private let clock = ContinuousClock()
+    @ObservationIgnored private var startInstant: ContinuousClock.Instant?
     @ObservationIgnored private var pausedElapsed: TimeInterval?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let saveCycle: (Cycle) -> Void
@@ -39,20 +42,20 @@ final class CycleTimer {
         if launchOptions.autostart {
             play()
         } else if let restored = session.restoredStart {
-            begin(at: restored)
+            begin(elapsed: Date.now.timeIntervalSince(restored))
         }
     }
 
     /// Starts from the beginning, or resumes from where a pause left off.
     func play() {
         guard !isRunning else { return }
-        begin(at: Date.now.addingTimeInterval(-(pausedElapsed ?? cycle.offset(of: selectedPhase))))
+        begin(elapsed: pausedElapsed ?? cycle.offset(of: selectedPhase))
     }
 
     /// Holds the current time. `play()` resumes from here.
     func pause() {
-        guard isRunning, let startDate else { return }
-        pausedElapsed = Date.now.timeIntervalSince(startDate)
+        guard isRunning else { return }
+        pausedElapsed = elapsed()
         isPaused = true
         halt()
     }
@@ -80,9 +83,10 @@ final class CycleTimer {
     }
 
     /// Time since the start of the session, excluding pauses.
-    func elapsed(at date: Date) -> TimeInterval {
+    func elapsed() -> TimeInterval {
         if let pausedElapsed { return pausedElapsed }
-        return startDate.map { date.timeIntervalSince($0) } ?? 0
+        guard let startInstant else { return 0 }
+        return (clock.now - startInstant).seconds
     }
 
     private func updateDockIcon() {
@@ -107,7 +111,7 @@ final class CycleTimer {
     private func halt() {
         ticker?.cancel()
         ticker = nil
-        startDate = nil
+        startInstant = nil
         chime.stop()
         #if os(macOS)
         ScreenFlash.cancel()
@@ -118,18 +122,18 @@ final class CycleTimer {
     #if DEBUG && os(macOS)
     /// Ends the current phase now, so the next phase and its alert begin immediately.
     func advanceToPhaseEnd() {
-        guard let startDate else { return }
-        self.startDate = cycle.startAdvancedToPhaseEnd(start: startDate, now: .now)
+        guard let startInstant, let position else { return }
+        self.startInstant = startInstant - .seconds(position.secondsRemaining)
         tick()
     }
     #endif
 
-    private func begin(at start: Date) {
+    private func begin(elapsed: TimeInterval) {
         pausedElapsed = nil
         isPaused = false
-        startDate = start
-        position = cycle.position(start: start, now: .now)
-        session.began(start: start, cycle: cycle)
+        startInstant = clock.now - .seconds(elapsed)
+        position = cycle.position(elapsed: elapsed)
+        session.began(start: Date.now.addingTimeInterval(-elapsed), cycle: cycle)
         ticker?.cancel()
         ticker = Task { [weak self] in
             // A thrown sleep means the task was cancelled. A nil self means the timer was released.
@@ -141,8 +145,8 @@ final class CycleTimer {
     }
 
     private func tick() {
-        guard let startDate, let old = position else { return }
-        let new = cycle.position(start: startDate, now: .now)
+        guard startInstant != nil, let old = position else { return }
+        let new = cycle.position(elapsed: elapsed())
         guard new != old else { return }
         position = new
         if cycle.shouldAlert(from: old, to: new), session.canAlert {
@@ -156,5 +160,12 @@ final class CycleTimer {
         #if os(macOS)
         ScreenFlash.play(entering: phase)
         #endif
+    }
+}
+
+private extension Duration {
+    var seconds: TimeInterval {
+        let (seconds, attoseconds) = components
+        return TimeInterval(seconds) + TimeInterval(attoseconds) / 1e18
     }
 }

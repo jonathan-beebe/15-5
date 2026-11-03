@@ -39,7 +39,7 @@ struct CycleTimerTests {
         timer.play()
         timer.pause()
         let held = timer.position
-        let elapsed = timer.elapsed(at: .now)
+        let elapsed = timer.elapsed()
 
         try await Task.sleep(for: .seconds(1.2))
 
@@ -47,7 +47,7 @@ struct CycleTimerTests {
         #expect(timer.isActive)
         #expect(!timer.isRunning)
         #expect(timer.position == held)
-        #expect(timer.elapsed(at: .now) == elapsed)
+        #expect(timer.elapsed() == elapsed)
         timer.stop()
     }
 
@@ -56,7 +56,7 @@ struct CycleTimerTests {
         timer.play()
         try await Task.sleep(for: .seconds(1.2))
         timer.pause()
-        let elapsed = timer.elapsed(at: .now)
+        let elapsed = timer.elapsed()
 
         try await Task.sleep(for: .seconds(1.2))
         timer.play()
@@ -64,7 +64,7 @@ struct CycleTimerTests {
         #expect(timer.isRunning)
         #expect(!timer.isPaused)
         // Under the 1.2s spent paused, with room for a busy test machine.
-        #expect(abs(timer.elapsed(at: .now) - elapsed) < 1)
+        #expect(abs(timer.elapsed() - elapsed) < 1)
         timer.stop()
     }
 
@@ -79,7 +79,7 @@ struct CycleTimerTests {
 
         timer.play()
         // Under the 1.2s from before the stop, with room for a busy test machine.
-        #expect(timer.elapsed(at: .now) < 1)
+        #expect(timer.elapsed() < 1)
         timer.stop()
     }
 

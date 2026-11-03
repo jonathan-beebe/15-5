@@ -23,21 +23,23 @@ struct CycleTests {
         #expect(cycle.fractionElapsed(of: position(at: 1050)) == 0.5)
     }
 
-    #if DEBUG
-    @Test func advancingToPhaseEndEntersTheNextPhaseAndAlerts() {
-        let now = start.addingTimeInterval(100.5)
+    @Test func advancingBySecondsRemainingEntersTheNextPhaseAndAlerts() {
         let old = position(at: 100.5)
-        let new = cycle.position(start: cycle.startAdvancedToPhaseEnd(start: start, now: now), now: now)
+        let new = cycle.position(elapsed: 100.5 + Double(old.secondsRemaining))
         #expect(new == CyclePosition(transitionCount: 1, phase: .rest, secondsRemaining: 300))
         #expect(cycle.shouldAlert(from: old, to: new))
     }
 
     @Test func advancingFromBreakEntersFocus() {
-        let now = start.addingTimeInterval(1000)
-        let new = cycle.position(start: cycle.startAdvancedToPhaseEnd(start: start, now: now), now: now)
+        let old = position(at: 1000)
+        let new = cycle.position(elapsed: 1000 + Double(old.secondsRemaining))
         #expect(new == CyclePosition(transitionCount: 2, phase: .focus, secondsRemaining: 900))
     }
-    #endif
+
+    @Test func positionFromDatesMatchesPositionFromElapsed() {
+        #expect(position(at: 1234.5) == cycle.position(elapsed: 1234.5))
+        #expect(position(at: -3) == cycle.position(elapsed: 0))
+    }
 
     @Test func adjustingChangesOnlyTheGivenPhase() {
         #expect(cycle.adjusting(.focus, byMinutes: 5) == Cycle(focus: 20 * 60, rest: 5 * 60))
