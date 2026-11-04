@@ -34,6 +34,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 RELEASE_DIR="$BUILD_DIR/release"
 FAILURES=()
 CREDENTIAL_ISSUES=()
+VALIDATION_FAILURES=()
 HAVE_API_KEY="true"
 TAG=""
 VERSION=""
@@ -207,7 +208,12 @@ release_platform() {
     return
   fi
   echo "==> Validate"
-  xcrun altool --validate-app -f "$artifact" -t "$altool_platform" --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
+  if ! xcrun altool --validate-app -f "$artifact" -t "$altool_platform" --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"; then
+    # A real run stops here. A dry run goes on to the other platform, so one rehearsal
+    # reports both, and fails at the end.
+    [[ "$DRY_RUN" == "true" ]] || exit 1
+    VALIDATION_FAILURES+=("$platform")
+  fi
   if [[ "$DRY_RUN" == "true" ]]; then
     echo "==> Upload: SKIPPED (--dry-run)"
     return
@@ -220,7 +226,10 @@ release_platform macOS macos pkg
 release_platform iOS ios ipa
 
 echo
-if [[ "$DRY_RUN" == "true" ]]; then
+if ((${#VALIDATION_FAILURES[@]} > 0)); then
+  echo "Dry run built and exported both platforms. Validation failed for: ${VALIDATION_FAILURES[*]}. An \"Unable to find Apple ID for Bundle ID\" error means the app record is missing in App Store Connect."
+  exit 1
+elif [[ "$DRY_RUN" == "true" ]]; then
   echo "Dry run complete. Artifacts are in dist/. Run make release to upload."
 else
   echo "Uploaded $TAG for both platforms. App Store Connect processes each build before it appears under TestFlight, and emails the account holder if processing rejects one."
