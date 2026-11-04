@@ -55,6 +55,9 @@ final class PlatformSession: TimerSession {
         chime.play()
     }
 
+    func show(_ position: CyclePosition?, cycle: Cycle) {}
+    func cycleChanged(_ cycle: Cycle) {}
+
     /// Runs after the previous replacement finishes, so a quick stop/start cannot interleave.
     private func replaceNotifications(start: Date?, cycle: Cycle?) {
         let previous = notificationWork

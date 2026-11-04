@@ -17,4 +17,9 @@ protocol TimerSession: AnyObject {
     /// Ends a run or a pause. An alert in progress stops here.
     func ended()
     func alert(entering phase: Phase)
+
+    /// The position to display: once at launch, on every tick, and nil on stop.
+    func show(_ position: CyclePosition?, cycle: Cycle)
+    /// The lengths changed while stopped, as often as a scroll moves.
+    func cycleChanged(_ cycle: Cycle)
 }

@@ -7,6 +7,7 @@ import Foundation
 final class PlatformSession: TimerSession {
     private var activity: NSObjectProtocol?
     private let chime = ChimePlayer()
+    private var pendingDockIconUpdate: Task<Void, Never>?
 
     let restoredStart: Date? = nil
     let restoredPausedElapsed: TimeInterval? = nil
@@ -32,6 +33,21 @@ final class PlatformSession: TimerSession {
     func alert(entering phase: Phase) {
         chime.play()
         ScreenFlash.play(entering: phase)
+    }
+
+    func show(_ position: CyclePosition?, cycle: Cycle) {
+        pendingDockIconUpdate?.cancel()
+        DockIcon.show(position, cycle: cycle)
+    }
+
+    /// Setting the Dock icon is slow enough to lag a scroll, so wait for the scrolling to pause.
+    func cycleChanged(_ cycle: Cycle) {
+        pendingDockIconUpdate?.cancel()
+        pendingDockIconUpdate = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            DockIcon.show(nil, cycle: cycle)
+        }
     }
 
     private func endActivity() {
