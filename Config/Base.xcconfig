@@ -6,7 +6,7 @@ DEVELOPMENT_TEAM =
 
 // The version App Store Connect shows, and the build number it orders uploads by.
 // Bump MARKETING_VERSION for each release and CURRENT_PROJECT_VERSION for each upload.
-MARKETING_VERSION = 1.0
+MARKETING_VERSION = 1.0.0
 CURRENT_PROJECT_VERSION = 1
 
 #include? "Local.xcconfig"

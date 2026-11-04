@@ -13,47 +13,66 @@ in the background.
 ## Setup
 
 ```sh
-cp Config/Local.example.xcconfig Config/Local.xcconfig
+make setup
 ```
 
-Set `APP_BUNDLE_ID` and `DEVELOPMENT_TEAM` in `Config/Local.xcconfig`. Git ignores the file.
-Debug builds for macOS and the Simulator work without a team. Release builds, device runs, and
-archives need one.
+Checks for Xcode and shellcheck and creates `Config/Local.xcconfig` from its example. Set
+`APP_BUNDLE_ID` and `DEVELOPMENT_TEAM` there. Git ignores the file. Debug builds for macOS and
+the Simulator work without a team. Release builds, device runs, and releases need one.
 
-## Build and test
+## Commands
+
+`make` lists every target. Each one wraps a script under `scripts/`, which holds the logic.
 
 ```sh
-xcodebuild -project 15-5.xcodeproj -scheme 15-5 -destination 'platform=macOS' test
-xcodebuild -project 15-5.xcodeproj -scheme 15-5 -destination 'platform=iOS Simulator,name=iPhone 18 Pro' test
+make run              # Debug build to dist/15-5.app, then launch it, replacing a running copy
+make demo             # the same, launched with a 6 s / 4 s cycle already running
+make test             # tests on macOS, then on an iOS Simulator (SIMULATOR=<name or UDID>)
+make check            # shellcheck, both test runs, and unsigned Release builds for both platforms
+make clean            # remove build/, dist/, and this project's DerivedData (DRY_RUN=1 lists only)
 ```
 
-Debug builds add a Developer menu on macOS and accept a `-demo` launch argument, which starts a
-6 s / 4 s cycle on launch. Release builds have neither.
+Full xcodebuild output goes to `build/logs/`. The terminal shows diagnostics, test results,
+and the verdict.
+
+Debug builds add a Developer menu on macOS and accept the `-demo` launch argument. Release
+builds have neither.
 
 ## Release
 
-1. Set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `Config/Base.xcconfig`. App Store
-   Connect rejects an upload whose build number it has already seen for that version.
-2. Archive each platform. In Xcode: Product > Archive with the destination set to
-   My Mac, then again with Any iOS Device. From the shell:
+The version and build number live in `Config/Base.xcconfig`, and a release is built from a
+`vX.Y.Z+##` tag on HEAD that agrees with that file. `##` is the build number, by default the
+date and time of the cut as `YYYYMMDDHHMM`. App Store Connect refuses a build number at or
+below the last upload for a version, and a review rejection is fixed by a new build of the same
+version, so each cut gets a higher number on its own.
 
-   ```sh
-   xcodebuild archive -project 15-5.xcodeproj -scheme 15-5 \
-     -destination 'generic/platform=macOS' -archivePath build/15-5-macOS.xcarchive
-   xcodebuild archive -project 15-5.xcodeproj -scheme 15-5 \
-     -destination 'generic/platform=iOS' -archivePath build/15-5-iOS.xcarchive -allowProvisioningUpdates
-   ```
+```sh
+make set-version VERSION=1.0.0 TAG=1   # write Config/Base.xcconfig, commit it, tag v1.0.0+<build>
+make release-dry-run                   # preflight, archive, export, validate, for both platforms
+make release                           # the same, then upload to App Store Connect
+```
 
-3. Upload each archive from Xcode's Organizer with Distribute App > App Store Connect, or
-   export with `xcodebuild -exportArchive` and a plist whose `method` is `app-store-connect`.
-   Signing is automatic. The macOS export needs the 3rd Party Mac Developer Installer
-   certificate in the keychain, and the iOS export needs an Apple Distribution certificate.
-   The iOS export runs `rsync` from `PATH` and fails with "Copy failed" under Homebrew's
-   rsync, so run it with `PATH=/usr/bin:/bin:/usr/sbin:/sbin`.
+`make set-version` without `TAG=1` writes the file and prints the commit and tag commands, to
+review the diff first. `BUILD=##` sets an explicit build number.
+
+Preflight is read-only and reports every problem at once: a missing or malformed tag, a tag
+that disagrees with `Config/Base.xcconfig`, uncommitted changes, no team, and missing
+credentials. Under `make release-dry-run` a missing credential is a warning, and the steps that
+need it are skipped.
+
+The release signs with the App Store Connect API key named in `scripts/release-config.sh`,
+read from `~/.appstoreconnect/private_keys/`. xcodebuild uses it to manage provisioning
+profiles and altool to validate and upload, so no Xcode account sign-in is involved. The
+keychain needs the Apple Distribution and 3rd Party Mac Developer Installer certificates for
+the team. Artifacts land in `dist/` as `15-5-<version>+<build>-macOS.pkg` and `-iOS.ipa`.
 
 The app makes no network connections, collects no data, and uses no encryption, so uploads skip
 the export compliance question (`ITSAppUsesNonExemptEncryption` is false in `Info.plist`).
 `PrivacyInfo.xcprivacy` declares the UserDefaults and elapsed-time API reasons.
+
+After the upload, App Store Connect processes each build before it appears under TestFlight.
+A build that never appears was rejected in processing, and Apple emails the account holder the
+reason. Validation does not catch everything processing does.
 
 ### App Store Connect checklist
 
@@ -74,4 +93,4 @@ Per platform, once:
 | `FifteenFive/` | App sources. `PlatformSession.*.swift` hold the per-platform effects. |
 | `FifteenFiveTests/` | Swift Testing suites. `RecordingSession` stands in for the platform. |
 | `Config/` | Build settings: versions, bundle ID, team. |
-| `scripts/` | Generators for the app icon and the chime. |
+| `scripts/` | The commands behind the Makefile, plus generators for the app icon and the chime. |
