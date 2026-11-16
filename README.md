@@ -3,7 +3,8 @@
 A focus timer for macOS, iOS, and iPadOS. Fifteen minutes of focus, five of break, on repeat.
 Both lengths are adjustable. Each phase change plays a chime; on macOS it also glows along the
 edges of every display in the phase color, and on iOS a local notification carries the alert
-while the app is in the background.
+while the app is in the background. On iOS a Home Screen and Lock Screen widget shows the
+current phase and counts down the time left in it.
 
 ## iOS in the background
 
@@ -19,6 +20,16 @@ Nothing in the app's control sounds an alert through Silent Mode, Guided Access,
 Downtime. The 64 notifications cover 10 h 40 min on the default cycle; the last one asks for a
 visit, which refills the queue.
 
+## iOS widget
+
+`FifteenFiveWidget.appex` is a WidgetKit extension embedded in the iOS app. The app writes the
+session (start date or paused elapsed time) and the cycle lengths to the UserDefaults suite of
+the app group `group.<APP_BUNDLE_ID>`, and the widget reads them from there and builds a
+timeline with one entry per phase change, so it counts down without the app running. The app
+reloads the widget's timelines after every change. The group is named in both entitlements
+files and under `AppGroupIdentifier` in both Info.plists; the macOS app has no group and keeps
+the session in the standard defaults.
+
 ## Requirements
 
 - Xcode 27
@@ -33,6 +44,10 @@ make setup
 Checks for Xcode and shellcheck and creates `Config/Local.xcconfig` from its example. Set
 `APP_BUNDLE_ID` and `DEVELOPMENT_TEAM` there. Git ignores the file. Debug builds for macOS and
 the Simulator work without a team. Release builds, device runs, and releases need one.
+
+Automatic signing registers two App IDs, `<APP_BUNDLE_ID>` and `<APP_BUNDLE_ID>.widget`, and
+the app group `group.<APP_BUNDLE_ID>` on both, the first time a signed iOS build runs
+(`-allowProvisioningUpdates` in `make release`, or a device run from Xcode).
 
 ## Commands
 
@@ -92,7 +107,8 @@ reason. Validation does not catch everything processing does.
 
 Per platform, once:
 
-- An app record for the bundle ID, with the macOS and iOS apps sharing one record.
+- An app record for the bundle ID, with the macOS and iOS apps sharing one record. The widget's
+  bundle ID (`<APP_BUNDLE_ID>.widget`) needs no record of its own; it ships inside the iOS app.
 - Screenshots: a Mac at 1280×800 or larger, an iPhone at 6.9" or 6.5", and an iPad at 13".
 - Privacy nutrition label: Data Not Collected.
 - Age rating questionnaire.
@@ -106,6 +122,8 @@ Per platform, once:
 | Path | Contents |
 | --- | --- |
 | `FifteenFive/` | App sources. `PlatformSession.*.swift` hold the per-platform effects. |
+| `Shared/` | Sources compiled into both the app and the widget: the cycle model, phase colors, and the `SessionStore` over the app group's UserDefaults. |
+| `FifteenFiveWidget/` | The iOS WidgetKit extension, with its `Info.plist` and entitlements. |
 | `FifteenFiveTests/` | Swift Testing suites. `RecordingSession` stands in for the platform. |
 | `Config/` | Build settings: versions, bundle ID, team. |
 | `scripts/` | The commands behind the Makefile, plus generators for the app icon and the chime. |

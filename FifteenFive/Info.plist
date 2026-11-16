@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
 	<!-- Xcode merges the generated keys into this file. Only keys the generator has no setting for live here. -->
+	<!-- Read at runtime by UserDefaults.appGroup (Shared/SessionStore.swift). Xcode expands the build setting. -->
+	<!-- On macOS the group is not entitled, so the suite fails to open and the store falls back to .standard. -->
+	<key>AppGroupIdentifier</key>
+	<string>group.$(APP_BUNDLE_ID)</string>
 	<!-- The app makes no network connections and uses no encryption, so uploads skip the export compliance question. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

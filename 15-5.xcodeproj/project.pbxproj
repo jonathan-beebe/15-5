@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A10000000000000000000024 /* FifteenFiveWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* FifteenFiveWidget.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A10000000000000000000020 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -14,12 +18,34 @@
 			remoteGlobalIDString = A10000000000000000000010;
 			remoteInfo = FifteenFive;
 		};
+		A10000000000000000000022 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000000000000000000001B;
+			remoteInfo = FifteenFiveWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A10000000000000000000039 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A10000000000000000000024 /* FifteenFiveWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000060 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = Config/Base.xcconfig; sourceTree = "<group>"; };
 		A10000000000000000000011 /* 15-5.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "15-5.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000012 /* FifteenFiveTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FifteenFiveTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000017 /* FifteenFiveWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FifteenFiveWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -30,6 +56,14 @@
 				Info.plist,
 			);
 			target = A10000000000000000000010 /* FifteenFive */;
+		};
+		A1000000000000000000001A /* Exceptions for "FifteenFiveWidget" folder in "FifteenFiveWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				FifteenFiveWidget.entitlements,
+				Info.plist,
+			);
+			target = A1000000000000000000001B /* FifteenFiveWidget */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -45,6 +79,19 @@
 		A10000000000000000000014 /* FifteenFiveTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FifteenFiveTests;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000018 /* FifteenFiveWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1000000000000000000001A /* Exceptions for "FifteenFiveWidget" folder in "FifteenFiveWidget" target */,
+			);
+			path = FifteenFiveWidget;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000019 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -64,6 +111,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000037 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -71,6 +125,8 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000013 /* FifteenFive */,
+				A10000000000000000000019 /* Shared */,
+				A10000000000000000000018 /* FifteenFiveWidget */,
 				A10000000000000000000014 /* FifteenFiveTests */,
 				A10000000000000000000060 /* Base.xcconfig */,
 				A10000000000000000000003 /* Products */,
@@ -81,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000011 /* 15-5.app */,
+				A10000000000000000000017 /* FifteenFiveWidget.appex */,
 				A10000000000000000000012 /* FifteenFiveTests.xctest */,
 			);
 			name = Products;
@@ -96,13 +153,16 @@
 				A10000000000000000000032 /* Sources */,
 				A10000000000000000000030 /* Frameworks */,
 				A10000000000000000000034 /* Resources */,
+				A10000000000000000000039 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A10000000000000000000023 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A10000000000000000000013 /* FifteenFive */,
+				A10000000000000000000019 /* Shared */,
 			);
 			name = FifteenFive;
 			productName = FifteenFive;
@@ -130,6 +190,27 @@
 			productReference = A10000000000000000000012 /* FifteenFiveTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A1000000000000000000001B /* FifteenFiveWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000053 /* Build configuration list for PBXNativeTarget "FifteenFiveWidget" */;
+			buildPhases = (
+				A10000000000000000000036 /* Sources */,
+				A10000000000000000000037 /* Frameworks */,
+				A10000000000000000000038 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000018 /* FifteenFiveWidget */,
+				A10000000000000000000019 /* Shared */,
+			);
+			name = FifteenFiveWidget;
+			productName = FifteenFiveWidget;
+			productReference = A10000000000000000000017 /* FifteenFiveWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -146,6 +227,9 @@
 					A10000000000000000000015 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = A10000000000000000000010;
+					};
+					A1000000000000000000001B = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -164,6 +248,7 @@
 			projectRoot = "";
 			targets = (
 				A10000000000000000000010 /* FifteenFive */,
+				A1000000000000000000001B /* FifteenFiveWidget */,
 				A10000000000000000000015 /* FifteenFiveTests */,
 			);
 		};
@@ -178,6 +263,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A10000000000000000000035 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000038 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -201,6 +293,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000036 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -208,6 +307,14 @@
 			isa = PBXTargetDependency;
 			target = A10000000000000000000010 /* FifteenFive */;
 			targetProxy = A10000000000000000000020 /* PBXContainerItemProxy */;
+		};
+		A10000000000000000000023 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilters = (
+				ios,
+			);
+			target = A1000000000000000000001B /* FifteenFiveWidget */;
+			targetProxy = A10000000000000000000022 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -357,6 +464,50 @@
 			};
 			name = Release;
 		};
+		A10000000000000000000046 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FifteenFiveWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "15-5";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).widget";
+				PRODUCT_NAME = FifteenFiveWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A10000000000000000000047 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FifteenFiveWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "15-5";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).widget";
+				PRODUCT_NAME = FifteenFiveWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -374,6 +525,15 @@
 			buildConfigurations = (
 				A10000000000000000000044 /* Debug */,
 				A10000000000000000000045 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000053 /* Build configuration list for PBXNativeTarget "FifteenFiveWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000046 /* Debug */,
+				A10000000000000000000047 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
