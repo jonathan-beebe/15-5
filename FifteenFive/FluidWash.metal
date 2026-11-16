@@ -51,9 +51,8 @@ constant float grainAmount = 0.02;
 
 /// Domain warping: noise displaces the input to more noise, which folds the pattern into
 /// currents. `time` moves each layer at its own rate, so the currents drift through each other.
-[[stitchable]] half4 fluidWash(
+static half3 wash(
     float2 position,
-    half4 color,
     float2 size,
     float time,
     half4 deep,
@@ -81,5 +80,50 @@ constant float grainAmount = 0.02;
 
     // Depends on position alone, so the grain stays still while the color flows beneath it.
     result += half((grainHash(position) * 2.0 - 1.0) * grainAmount);
-    return half4(result, 1.0);
+    return result;
+}
+
+[[stitchable]] half4 fluidWash(
+    float2 position,
+    half4 color,
+    float2 size,
+    float time,
+    half4 deep,
+    half4 middle,
+    half4 bright,
+    float softness
+) {
+    return half4(wash(position, size, time, deep, middle, bright, softness), 1.0);
+}
+
+/// Signed distance to a rounded rectangle centered on the origin: negative inside.
+static float roundedBoxDistance(float2 p, float2 halfSize, float radius) {
+    float2 q = abs(p) - halfSize + radius;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+}
+
+/// The wash confined to a band along the edges, clear in the middle and fully opaque at the
+/// bezel. The band's inner boundary is a rounded rectangle, so the glow wraps the corners.
+/// Pixels in the clear middle return before any noise is computed. Output is premultiplied.
+[[stitchable]] half4 fluidGlow(
+    float2 position,
+    half4 color,
+    float2 size,
+    float time,
+    half4 deep,
+    half4 middle,
+    half4 bright,
+    float softness,
+    float width
+) {
+    float2 fromCenter = position - size / 2.0;
+    float distance = roundedBoxDistance(fromCenter, size / 2.0 - width, width);
+    float reach = saturate(distance / width);
+    // Squared, so the glow gathers at the edge and trails off softly toward the middle.
+    float alpha = reach * reach;
+    if (alpha <= 0.0) {
+        return half4(0.0);
+    }
+    half3 result = wash(position, size, time, deep, middle, bright, softness);
+    return half4(result * half(alpha), half(alpha));
 }

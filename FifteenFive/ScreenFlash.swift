@@ -2,16 +2,20 @@
 import AppKit
 import SwiftUI
 
-/// Washes every display in a flowing phase-colored gradient, over all apps and Spaces, using
-/// click-through windows. One slow pulse stays under the WCAG 2.3.1 limit of 3 flashes per second.
+/// Glows along the edges of every display in a flowing phase-colored gradient, over all apps and
+/// Spaces, using click-through windows. The middle of each display stays clear. One slow pulse
+/// stays under the WCAG 2.3.1 limit of 3 flashes per second.
 @MainActor
 enum ScreenFlash {
+    /// Width of the glow band, as a share of the display's shorter side.
+    static let glowShare = 0.16
+
     private static var windows: [NSWindow] = []
     private static var dismissal: Task<Void, Never>?
 
     static func play(entering phase: Phase) {
         cancel()
-        let content = FluidGradient(
+        let content = BezelGlow(
             phase: phase,
             start: .now,
             flows: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -26,7 +30,7 @@ enum ScreenFlash {
         }
     }
 
-    /// Takes the wash down at once. Stop calls this so the wash ends with the chime.
+    /// Takes the glow down at once. Stop calls this so the glow ends with the chime.
     static func cancel() {
         dismissal?.cancel()
         dismissal = nil
@@ -34,14 +38,14 @@ enum ScreenFlash {
         windows = []
     }
 
-    private static func makeWindow(on screen: NSScreen, content: FluidGradient) -> NSWindow {
+    private static func makeWindow(on screen: NSScreen, content: BezelGlow) -> NSWindow {
         let window = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.animationBehavior = .none
         window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         window.ignoresMouseEvents = true
-        // Keeps the wash out of screen sharing and recordings. It is for the person at the Mac.
+        // Keeps the glow out of screen sharing and recordings. It is for the person at the Mac.
         window.sharingType = .none
         window.isOpaque = false
         window.hasShadow = false
@@ -81,19 +85,23 @@ enum FlashEnvelope {
     }
 }
 
-private struct FluidGradient: View {
+private struct BezelGlow: View {
     let phase: Phase
     let start: Date
     let flows: Bool
 
-    /// Starts each wash at a different place in the pattern.
+    /// Starts each glow at a different place in the pattern.
     private let seed = Double.random(in: 0 ..< 50)
 
     var body: some View {
         TimelineView(.animation(minimumInterval: FluidSurface.frameInterval)) { context in
             let elapsed = context.date.timeIntervalSince(start)
-            FluidSurface(phase: phase, time: seed + (flows ? elapsed * FluidSurface.flowRate : 0))
-                .opacity(FlashEnvelope.opacity(at: elapsed, pulsing: flows))
+            FluidSurface(
+                phase: phase,
+                time: seed + (flows ? elapsed * FluidSurface.flowRate : 0),
+                glowShare: ScreenFlash.glowShare
+            )
+            .opacity(FlashEnvelope.opacity(at: elapsed, pulsing: flows))
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
