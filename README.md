@@ -5,6 +5,20 @@ Both lengths are adjustable. Each phase change plays a chime; on macOS it also w
 display in the phase color, and on iOS a local notification carries the alert while the app is
 in the background.
 
+## iOS in the background
+
+iOS suspends the app once another app is in front, and may end its process under memory
+pressure. Neither loses the session: the start date lives in UserDefaults, and up to 64 scheduled
+local notifications carry the chime, one per phase change, until the app is next opened. The
+notifications are Time Sensitive (`FifteenFive/FifteenFive.iOS.entitlements`), so a Focus or the
+Scheduled Summary lets them through. While a session runs, the app reads the notification
+settings each time it comes to the front and names the one that keeps alerts from the user:
+notifications denied, banners off, sounds off, the Scheduled Summary, or Time Sensitive off.
+
+Nothing in the app's control sounds an alert through Silent Mode, Guided Access, or Screen Time
+Downtime. The 64 notifications cover 10 h 40 min on the default cycle; the last one asks for a
+visit, which refills the queue.
+
 ## Requirements
 
 - Xcode 27
@@ -84,7 +98,8 @@ Per platform, once:
 - Age rating questionnaire.
 - Review notes: the macOS app replaces its Dock icon while running and covers every display for
   four seconds at each phase change. The iOS app asks for notification permission on the first
-  Play.
+  Play, and its phase-change notifications are Time Sensitive because each one is a timer the
+  user set going off.
 
 ## Layout
 

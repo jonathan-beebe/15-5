@@ -16,8 +16,8 @@ final class CycleTimer {
     /// The phase `play()` starts from. Only changes while stopped.
     private(set) var selectedPhase = Phase.focus
 
-    /// True when background alerts can't sound because the user denied notifications.
-    var notificationsDenied: Bool { session.notificationsDenied }
+    /// Whether background alerts reach the user. Only iOS reports anything past `ready`.
+    var alertDelivery: AlertDelivery { session.alertDelivery }
 
     /// True while running or paused.
     var isActive: Bool { position != nil }
@@ -31,6 +31,8 @@ final class CycleTimer {
     /// still through wall-clock changes. The wall-clock date is kept only for the session to persist.
     @ObservationIgnored private let clock = ContinuousClock()
     @ObservationIgnored private var startInstant: ContinuousClock.Instant?
+    /// When `begin` last ran. A foreground refresh right after it would schedule the same alerts twice.
+    @ObservationIgnored private var lastBegan: ContinuousClock.Instant?
     @ObservationIgnored private var pausedElapsed: TimeInterval?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let saveCycle: (Cycle) -> Void
@@ -91,8 +93,10 @@ final class CycleTimer {
     }
 
     /// iOS keeps at most 64 pending notifications, so each return to the foreground refills them.
+    /// A cold launch of a running session goes active right after `init` already scheduled them.
     func refreshAlerts() {
         guard isRunning else { return }
+        if let lastBegan, clock.now - lastBegan < .seconds(1) { return }
         session.began(start: Date.now.addingTimeInterval(-elapsed()), cycle: cycle)
     }
 
@@ -123,16 +127,25 @@ final class CycleTimer {
         pausedElapsed = nil
         isPaused = false
         startInstant = clock.now - .seconds(elapsed)
+        lastBegan = clock.now
         position = cycle.position(elapsed: elapsed)
         session.began(start: Date.now.addingTimeInterval(-elapsed), cycle: cycle)
         ticker?.cancel()
         ticker = Task { [weak self] in
-            // A thrown sleep means the task was cancelled. A nil self means the timer was released.
-            while (try? await Task.sleep(for: .milliseconds(250))) != nil {
-                guard let self else { return }
-                tick()
+            // A nil deadline means the timer was released or halted. A thrown sleep means the task
+            // was cancelled.
+            while let deadline = self?.nextTick() {
+                guard (try? await Task.sleep(until: deadline, clock: .continuous)) != nil else { return }
+                self?.tick()
             }
         }
+    }
+
+    /// The next whole second of elapsed time. The display shows whole seconds, so one wake per
+    /// second is enough, and one aligned to the boundary shows each second as it arrives.
+    private func nextTick() -> ContinuousClock.Instant? {
+        guard let startInstant else { return nil }
+        return startInstant + .seconds(elapsed().rounded(.down) + 1)
     }
 
     private func tick() {

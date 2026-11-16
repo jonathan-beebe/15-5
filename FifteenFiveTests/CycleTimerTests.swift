@@ -24,11 +24,60 @@ struct CycleTimerTests {
     }
 
     @Test func restoresARunningSession() {
-        session.restoredStart = Date.now.addingTimeInterval(-100)
+        let start = Date.now.addingTimeInterval(-100)
+        session.restoredStart = start
         let timer = makeTimer()
         #expect(timer.isRunning)
         #expect(timer.position?.phase == .focus)
         #expect(timer.position?.secondsRemaining == 800)
+        // The restored session reschedules its alerts from the same start.
+        #expect(session.events.count == 1)
+        if case .began(let rescheduled, _) = session.events[0] {
+            #expect(abs(rescheduled.timeIntervalSince(start)) < 1)
+        } else {
+            Issue.record("no began")
+        }
+        timer.stop()
+    }
+
+    @Test func restoresARunningSessionIntoALaterPhase() {
+        session.restoredStart = Date.now.addingTimeInterval(-1_000)
+        let timer = makeTimer()
+        #expect(timer.position?.transitionCount == 1)
+        #expect(timer.position?.phase == .rest)
+        #expect(timer.position?.secondsRemaining == 200)
+        timer.stop()
+    }
+
+    @Test func refreshRightAfterBeginningIsSkipped() {
+        let timer = makeTimer()
+        timer.play()
+        timer.refreshAlerts()
+        #expect(session.events.count == 1)
+        timer.stop()
+    }
+
+    @Test func refreshReschedulesFromTheSameStart() async throws {
+        let timer = makeTimer()
+        timer.play()
+        try await Task.sleep(for: .seconds(1.1))
+        timer.refreshAlerts()
+        #expect(session.events.count == 2)
+        if case .began(let first, _) = session.events[0], case .began(let second, _) = session.events[1] {
+            #expect(abs(second.timeIntervalSince(first)) < 1)
+        } else {
+            Issue.record("no began")
+        }
+        timer.stop()
+    }
+
+    @Test func refreshDoesNothingWhilePausedOrStopped() {
+        let timer = makeTimer()
+        timer.refreshAlerts()
+        timer.play()
+        timer.pause()
+        timer.refreshAlerts()
+        #expect(session.events.filter { if case .began = $0 { true } else { false } }.count == 1)
         timer.stop()
     }
 
@@ -225,7 +274,7 @@ struct CycleTimerTests {
         var saved: [Cycle] = []
         var options = LaunchOptions()
         options.saveCycle = { saved.append($0) }
-        let timer = CycleTimer(launchOptions: options)
+        let timer = CycleTimer(launchOptions: options, session: session)
         timer.stop()
         timer.adjustSelectedPhase(byMinutes: 1)
         #expect(saved == [Cycle(focus: 16 * 60, rest: 5 * 60)])

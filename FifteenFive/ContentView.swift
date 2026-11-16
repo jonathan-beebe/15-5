@@ -61,9 +61,9 @@ struct ContentView: View {
             }
 
             #if os(iOS)
-            if timer.isActive && timer.notificationsDenied {
+            if timer.isActive, let problem = timer.alertDelivery.problem {
                 VStack(spacing: 4) {
-                    Text("Notifications are off, so alerts stay silent while the app is in the background.")
+                    Text(problem)
                     Link("Open Settings", destination: Self.notificationSettings)
                 }
                 .font(.footnote)
@@ -207,10 +207,17 @@ private struct FlowingBackground: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.scenePhase) private var scenePhase
     @State private var seed = Double.random(in: 0 ..< 50)
 
+    /// The shader is the app's main power cost, so it holds still whenever nothing is watching:
+    /// a pause, Reduce Motion, or a scene that is covered or in the background.
+    private var isFlowPaused: Bool {
+        timer.isPaused || reduceMotion || scenePhase != .active
+    }
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval, paused: timer.isPaused || reduceMotion)) { context in
+        TimelineView(.animation(minimumInterval: FluidSurface.frameInterval, paused: isFlowPaused)) { context in
             FluidSurface(
                 phase: phase,
                 time: seed + flowElapsed * FluidSurface.flowRate,
