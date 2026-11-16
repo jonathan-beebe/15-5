@@ -12,7 +12,7 @@ final class PlatformSession: TimerSession {
     let restoredStart: Date? = nil
     let restoredPausedElapsed: TimeInterval? = nil
     let canAlert = true
-    let notificationsDenied = false
+    let alertDelivery = AlertDelivery.ready
 
     func began(start: Date, cycle: Cycle) {
         endActivity()

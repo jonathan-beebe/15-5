@@ -14,7 +14,7 @@ final class RecordingSession: TimerSession {
     var restoredStart: Date?
     var restoredPausedElapsed: TimeInterval?
     var canAlert = true
-    var notificationsDenied = false
+    var alertDelivery = AlertDelivery.ready
     private(set) var events: [Event] = []
 
     func began(start: Date, cycle: Cycle) { events.append(.began(start: start, cycle: cycle)) }

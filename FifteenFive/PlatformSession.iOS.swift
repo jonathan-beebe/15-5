@@ -15,9 +15,9 @@ final class PlatformSession: TimerSession {
     @ObservationIgnored private var notificationWork: Task<Void, Never>?
     @ObservationIgnored private let chime = ChimePlayer()
 
-    /// True once the user has denied notifications, so the app can say why background alerts
-    /// stay silent.
-    private(set) var notificationsDenied = false
+    /// Read from the notification settings each time a session begins or the app returns to the
+    /// foreground, so the app can say which setting keeps background alerts from the user.
+    private(set) var alertDelivery = AlertDelivery.ready
 
     /// Scheduled notifications outlive the process, so a relaunch resumes the running session.
     var restoredStart: Date? {
@@ -34,14 +34,17 @@ final class PlatformSession: TimerSession {
         UIApplication.shared.applicationState != .background
     }
 
+    /// Only one of the two keys is set at a time, so a relaunch never sees both a running and a
+    /// paused session.
     func began(start: Date, cycle: Cycle) {
         UserDefaults.standard.set(start, forKey: Self.startKey)
+        UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
         replaceNotifications(start: start, cycle: cycle)
     }
 
-    /// Called after `ended()`, so the start date and notifications are already gone.
     func paused(elapsed: TimeInterval) {
         UserDefaults.standard.set(elapsed, forKey: Self.pausedElapsedKey)
+        UserDefaults.standard.removeObject(forKey: Self.startKey)
     }
 
     func ended() {
@@ -70,12 +73,12 @@ final class PlatformSession: TimerSession {
 
             guard let start, let cycle else { return }
             do {
-                notificationsDenied = try await !center.requestAuthorization(options: [.alert, .sound])
+                _ = try await center.requestAuthorization(options: [.alert, .sound])
             } catch {
                 logger.error("Notification authorization failed: \(error)")
-                notificationsDenied = true
             }
-            guard !notificationsDenied else { return }
+            alertDelivery = Self.delivery(from: await center.notificationSettings())
+            guard alertDelivery != .denied else { return }
 
             let now = Date.now
             let transitions = cycle.upcomingTransitions(start: start, now: now, limit: Self.maxPending)
@@ -96,6 +99,21 @@ final class PlatformSession: TimerSession {
         }
     }
 
+    /// The first setting that keeps an alert from the user. `.notSupported` for Time Sensitive
+    /// means the build lacks the entitlement, which is a build problem and not the user's.
+    nonisolated static func delivery(from settings: UNNotificationSettings) -> AlertDelivery {
+        switch settings.authorizationStatus {
+        case .denied, .notDetermined: return .denied
+        case .authorized, .provisional, .ephemeral: break
+        @unknown default: break
+        }
+        if settings.alertSetting == .disabled { return .alertsOff }
+        if settings.soundSetting == .disabled { return .soundOff }
+        if settings.scheduledDeliverySetting == .enabled { return .summarized }
+        if settings.timeSensitiveSetting == .disabled { return .notTimeSensitive }
+        return .ready
+    }
+
     /// The text names the length of the phase being entered, which the user can change. The last
     /// notification in the queue asks for a visit, which refills the queue.
     nonisolated static func body(entering phase: Phase, cycle: Cycle, endsQueue: Bool = false) -> String {
@@ -107,7 +125,9 @@ final class PlatformSession: TimerSession {
         return endsQueue ? body + " Open 15-5 to keep the alerts coming." : body
     }
 
-    private static func request(
+    /// Time Sensitive, so a Focus or the Scheduled Summary lets the alert through at its time.
+    /// A timer the user set is within Apple's stated use for the level.
+    nonisolated static func request(
         for transition: Transition,
         cycle: Cycle,
         now: Date,
@@ -117,6 +137,7 @@ final class PlatformSession: TimerSession {
         content.title = transition.entering.title
         content.body = body(entering: transition.entering, cycle: cycle, endsQueue: endsQueue)
         content.sound = UNNotificationSound(named: UNNotificationSoundName(ChimePlayer.fileName))
+        content.interruptionLevel = .timeSensitive
         let trigger = UNTimeIntervalNotificationTrigger(
             timeInterval: transition.date.timeIntervalSince(now),
             repeats: false

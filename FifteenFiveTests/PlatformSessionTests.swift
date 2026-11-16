@@ -1,6 +1,7 @@
 #if os(iOS)
 import Foundation
 import Testing
+import UserNotifications
 @testable import FifteenFive
 
 @MainActor
@@ -19,6 +20,33 @@ struct PlatformSessionTests {
 
         session.ended()
         #expect(session.restoredPausedElapsed == nil)
+    }
+
+    @Test func onlyOneOfRunningAndPausedSurvives() {
+        let session = PlatformSession()
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        session.paused(elapsed: 42)
+        session.began(start: start, cycle: .standard)
+        #expect(session.restoredStart == start)
+        #expect(session.restoredPausedElapsed == nil)
+
+        session.paused(elapsed: 43)
+        #expect(session.restoredStart == nil)
+        #expect(session.restoredPausedElapsed == 43)
+        session.ended()
+    }
+
+    @Test func requestsAreTimeSensitiveWithTheChime() {
+        let now = Date(timeIntervalSinceReferenceDate: 1_000)
+        let transition = Transition(date: now.addingTimeInterval(900), entering: .rest)
+        let request = PlatformSession.request(for: transition, cycle: .standard, now: now, endsQueue: false)
+        #expect(request.content.interruptionLevel == .timeSensitive)
+        #expect(request.content.sound == UNNotificationSound(named: UNNotificationSoundName("chime.wav")))
+        #expect(request.content.title == Phase.rest.title)
+        #expect(request.content.body == "Focus is over. 5-minute break.")
+        let trigger = request.trigger as? UNTimeIntervalNotificationTrigger
+        #expect(trigger?.timeInterval == 900)
+        #expect(trigger?.repeats == false)
     }
 
     @Test func notificationBodyUsesTheCycleLengths() {
