@@ -200,7 +200,7 @@ class WindowDragView: NSView {
 }
 #endif
 
-/// The screen wash's gradient, at full color.
+/// The screen glow's gradient, at full color.
 private struct FlowingBackground: View {
     let phase: Phase
     let timer: CycleTimer

@@ -11,19 +11,36 @@ struct FluidSurface: View {
     let time: Double
     /// From 0 for the full color range to 1 for a flat average color.
     var softness = 0.0
+    /// Confines the pattern to a band this wide along the edges, as a share of the shorter side.
+    /// Nil fills the whole surface.
+    var glowShare: Double?
 
     var body: some View {
         GeometryReader { proxy in
             Rectangle()
-                .colorEffect(ShaderLibrary.fluidWash(
-                    .float2(proxy.size),
-                    .float(time),
-                    .color(phase.gradientColors[1]),
-                    .color(phase.gradientColors[0]),
-                    .color(phase.flowAccent),
-                    .float(softness)
-                ))
+                .colorEffect(shader(size: proxy.size))
         }
+    }
+
+    private func shader(size: CGSize) -> Shader {
+        let wash = ShaderLibrary.fluidWash(
+            .float2(size),
+            .float(time),
+            .color(phase.gradientColors[1]),
+            .color(phase.gradientColors[0]),
+            .color(phase.flowAccent),
+            .float(softness)
+        )
+        guard let glowShare else { return wash }
+        return ShaderLibrary.fluidGlow(
+            .float2(size),
+            .float(time),
+            .color(phase.gradientColors[1]),
+            .color(phase.gradientColors[0]),
+            .color(phase.flowAccent),
+            .float(softness),
+            .float(min(size.width, size.height) * glowShare)
+        )
     }
 }
 

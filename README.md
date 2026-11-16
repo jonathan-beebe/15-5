@@ -1,9 +1,9 @@
 # 15-5
 
 A focus timer for macOS, iOS, and iPadOS. Fifteen minutes of focus, five of break, on repeat.
-Both lengths are adjustable. Each phase change plays a chime; on macOS it also washes every
-display in the phase color, and on iOS a local notification carries the alert while the app is
-in the background.
+Both lengths are adjustable. Each phase change plays a chime; on macOS it also glows along the
+edges of every display in the phase color, and on iOS a local notification carries the alert
+while the app is in the background.
 
 ## iOS in the background
 
@@ -96,8 +96,8 @@ Per platform, once:
 - Screenshots: a Mac at 1280×800 or larger, an iPhone at 6.9" or 6.5", and an iPad at 13".
 - Privacy nutrition label: Data Not Collected.
 - Age rating questionnaire.
-- Review notes: the macOS app replaces its Dock icon while running and covers every display for
-  four seconds at each phase change. The iOS app asks for notification permission on the first
+- Review notes: the macOS app replaces its Dock icon while running and glows along the edges of
+  every display for four seconds at each phase change. The iOS app asks for notification permission on the first
   Play, and its phase-change notifications are Time Sensitive because each one is a timer the
   user set going off.
 

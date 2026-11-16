@@ -36,28 +36,34 @@ struct DeveloperMenu: View {
     }
 }
 
-/// Shows the screen wash's gradient flowing at full opacity, with no fades, chime, or timer.
+/// Shows the screen glow's gradient flowing at full opacity, with no fades, chime, or timer.
+/// "Edges" shows it confined to the band the glow uses, over a clear middle.
 struct GradientPreview: View {
     static let windowID = "gradient-preview"
 
     @State private var phase = Phase.focus
+    @State private var edgesOnly = false
     @State private var start = Date.now
 
     var body: some View {
         TimelineView(.animation(minimumInterval: FluidSurface.frameInterval)) { context in
             FluidSurface(
                 phase: phase,
-                time: context.date.timeIntervalSince(start) * FluidSurface.flowRate
+                time: context.date.timeIntervalSince(start) * FluidSurface.flowRate,
+                glowShare: edgesOnly ? ScreenFlash.glowShare : nil
             )
         }
         .safeAreaInset(edge: .bottom) {
-            Picker("Phase", selection: $phase) {
-                Text(Phase.focus.title).tag(Phase.focus)
-                Text(Phase.rest.title).tag(Phase.rest)
+            HStack(spacing: 16) {
+                Picker("Phase", selection: $phase) {
+                    Text(Phase.focus.title).tag(Phase.focus)
+                    Text(Phase.rest.title).tag(Phase.rest)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                Toggle("Edges", isOn: $edgesOnly)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
             .padding(12)
         }
     }
