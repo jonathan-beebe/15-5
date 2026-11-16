@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000000000000000000024 /* FifteenFiveWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* FifteenFiveWidget.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A10000000000000000000024 /* FifteenFiveWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* FifteenFiveWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +53,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				FifteenFive.iOS.entitlements,
+				FifteenFive.macOS.entitlements,
 				Info.plist,
 			);
 			target = A10000000000000000000010 /* FifteenFive */;
@@ -61,6 +62,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				FifteenFiveWidget.entitlements,
+				FifteenFiveWidget.macOS.entitlements,
 				Info.plist,
 			);
 			target = A1000000000000000000001B /* FifteenFiveWidget */;
@@ -310,9 +312,6 @@
 		};
 		A10000000000000000000023 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilters = (
-				ios,
-			);
 			target = A1000000000000000000001B /* FifteenFiveWidget */;
 			targetProxy = A10000000000000000000022 /* PBXContainerItemProxy */;
 		};
@@ -377,10 +376,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = FifteenFive/FifteenFive.iOS.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = FifteenFive/FifteenFive.iOS.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = FifteenFive/FifteenFive.macOS.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -410,6 +409,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = FifteenFive/FifteenFive.iOS.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = FifteenFive/FifteenFive.iOS.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = FifteenFive/FifteenFive.macOS.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -437,7 +437,6 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).tests";
@@ -453,7 +452,6 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).tests";
@@ -467,19 +465,25 @@
 		A10000000000000000000046 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = FifteenFiveWidget/FifteenFiveWidget.macOS.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FifteenFiveWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "15-5";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).widget";
 				PRODUCT_NAME = FifteenFiveWidget;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -489,19 +493,25 @@
 		A10000000000000000000047 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = FifteenFiveWidget/FifteenFiveWidget.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = FifteenFiveWidget/FifteenFiveWidget.macOS.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FifteenFiveWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "15-5";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(APP_BUNDLE_ID).widget";
 				PRODUCT_NAME = FifteenFiveWidget;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

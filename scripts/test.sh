@@ -27,7 +27,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 cd "$ROOT_DIR"
 
 if [[ "$RUN_MACOS" == "true" ]]; then
-  run_xcodebuild test-macos -destination 'platform=macOS' -derivedDataPath "$DERIVED_DATA" test
+  # The macOS app signs with the team (see build-app.sh), and a test run needs this Mac in the
+  # development profile, which -allowProvisioningUpdates registers the first time.
+  run_xcodebuild test-macos -destination 'platform=macOS' -derivedDataPath "$DERIVED_DATA" -allowProvisioningUpdates test
 fi
 
 if [[ "$RUN_IOS" == "true" ]]; then

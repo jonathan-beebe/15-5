@@ -13,17 +13,12 @@ enum SessionState: Equatable, Sendable {
 extension UserDefaults {
     /// The app group suite shared with the widget, or `.standard` where there is none. The
     /// identifier comes from Info.plist so the entitlement and this string cannot drift apart.
-    /// The macOS app has no widget and no app group entitlement, so it keeps `.standard`.
     /// UserDefaults is thread-safe, so the unsafe marker is only for the compiler.
     nonisolated(unsafe) static let appGroup: UserDefaults = {
-        #if os(macOS)
-        return .standard
-        #else
         guard let identifier = Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String,
               let suite = UserDefaults(suiteName: identifier)
         else { return .standard }
         return suite
-        #endif
     }()
 }
 

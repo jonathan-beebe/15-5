@@ -3,8 +3,9 @@
 A focus timer for macOS, iOS, and iPadOS. Fifteen minutes of focus, five of break, on repeat.
 Both lengths are adjustable. Each phase change plays a chime; on macOS it also glows along the
 edges of every display in the phase color, and on iOS a local notification carries the alert
-while the app is in the background. On iOS a Home Screen and Lock Screen widget shows the
-current phase and counts down the time left in it.
+while the app is in the background. A widget shows the current phase and counts down the time
+left in it: on the Home Screen and Lock Screen on iOS, and in Notification Center or on the
+desktop on macOS.
 
 ## iOS in the background
 
@@ -20,15 +21,18 @@ Nothing in the app's control sounds an alert through Silent Mode, Guided Access,
 Downtime. The 64 notifications cover 10 h 40 min on the default cycle; the last one asks for a
 visit, which refills the queue.
 
-## iOS widget
+## Widget
 
-`FifteenFiveWidget.appex` is a WidgetKit extension embedded in the iOS app. The app writes the
+`FifteenFiveWidget.appex` is a WidgetKit extension embedded in both apps. The app writes the
 session (start date or paused elapsed time) and the cycle lengths to the UserDefaults suite of
 the app group `group.<APP_BUNDLE_ID>`, and the widget reads them from there and builds a
 timeline with one entry per phase change, so it counts down without the app running. The app
-reloads the widget's timelines after every change. The group is named in both entitlements
-files and under `AppGroupIdentifier` in both Info.plists; the macOS app has no group and keeps
-the session in the standard defaults.
+reloads the widget's timelines after every change.
+
+On iOS the session outlives the process, so the widget keeps counting after the app is closed.
+On macOS nothing sounds the chime once the app has quit, so the app clears the session at
+launch and on termination and the widget shows the timer only while the app runs. The Lock
+Screen families exist on iOS only.
 
 ## Requirements
 
@@ -42,12 +46,13 @@ make setup
 ```
 
 Checks for Xcode and shellcheck and creates `Config/Local.xcconfig` from its example. Set
-`APP_BUNDLE_ID` and `DEVELOPMENT_TEAM` there. Git ignores the file. Debug builds for macOS and
-the Simulator work without a team. Release builds, device runs, and releases need one.
+`APP_BUNDLE_ID` and `DEVELOPMENT_TEAM` there. Git ignores the file. Debug builds for the
+Simulator work without a team. macOS builds, device runs, and releases need one, since the
+widget's app group needs a development certificate on macOS.
 
-Automatic signing registers two App IDs, `<APP_BUNDLE_ID>` and `<APP_BUNDLE_ID>.widget`, and
-the app group `group.<APP_BUNDLE_ID>` on both, the first time a signed iOS build runs
-(`-allowProvisioningUpdates` in `make release`, or a device run from Xcode).
+The first signed build registers the App IDs, the app group, and this Mac through automatic
+signing, which needs an Apple account signed in to Xcode or the release's App Store Connect API
+key.
 
 ## Commands
 
@@ -108,7 +113,7 @@ reason. Validation does not catch everything processing does.
 Per platform, once:
 
 - An app record for the bundle ID, with the macOS and iOS apps sharing one record. The widget's
-  bundle ID (`<APP_BUNDLE_ID>.widget`) needs no record of its own; it ships inside the iOS app.
+  bundle ID (`<APP_BUNDLE_ID>.widget`) needs no record of its own; it ships inside each app.
 - Screenshots: a Mac at 1280×800 or larger, an iPhone at 6.9" or 6.5", and an iPad at 13".
 - Privacy nutrition label: Data Not Collected.
 - Age rating questionnaire.
