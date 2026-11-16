@@ -96,15 +96,21 @@ static half3 wash(
     return half4(wash(position, size, time, deep, middle, bright, softness), 1.0);
 }
 
-/// Signed distance to a rounded rectangle centered on the origin: negative inside.
-static float roundedBoxDistance(float2 p, float2 halfSize, float radius) {
-    float2 q = abs(p) - halfSize + radius;
-    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+/// How far a point lies outside a box, in units of `width`: negative inside, positive outside.
+/// Outside the box's corner the distance is a superellipse norm, so the glow's contours turn the
+/// corner on a tight continuous curve like a Mac display's, instead of a circle `width` across.
+static float boxReach(float2 p, float2 halfSize, float width, float cornerExponent) {
+    float2 q = (abs(p) - halfSize) / width;
+    float2 outside = max(q, 0.0);
+    float corner = pow(pow(outside.x, cornerExponent) + pow(outside.y, cornerExponent), 1.0 / cornerExponent);
+    return corner + min(max(q.x, q.y), 0.0);
 }
 
+/// Exponent of the superellipse that turns the corner. Higher is squarer.
+constant float cornerExponent = 12.0;
+
 /// The wash confined to a band along the edges, clear in the middle and fully opaque at the
-/// bezel. The band's inner boundary is a rounded rectangle, so the glow wraps the corners.
-/// Pixels in the clear middle return before any noise is computed. Output is premultiplied.
+/// bezel. Pixels in the clear middle return before any noise is computed. Output is premultiplied.
 [[stitchable]] half4 fluidGlow(
     float2 position,
     half4 color,
@@ -117,8 +123,7 @@ static float roundedBoxDistance(float2 p, float2 halfSize, float radius) {
     float width
 ) {
     float2 fromCenter = position - size / 2.0;
-    float distance = roundedBoxDistance(fromCenter, size / 2.0 - width, width);
-    float reach = saturate(distance / width);
+    float reach = saturate(boxReach(fromCenter, size / 2.0 - width, width, cornerExponent));
     // Squared, so the glow gathers at the edge and trails off softly toward the middle.
     float alpha = reach * reach;
     if (alpha <= 0.0) {
