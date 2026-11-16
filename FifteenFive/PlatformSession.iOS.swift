@@ -1,18 +1,18 @@
 #if os(iOS)
 import UIKit
 import UserNotifications
+import WidgetKit
 
 /// iOS suspends the app in the background, so scheduled local notifications carry the sound there.
 /// With no notification delegate set, iOS does not present them while the app is in the foreground.
 @MainActor
 @Observable
 final class PlatformSession: TimerSession {
-    private static let startKey = "startDate"
-    private static let pausedElapsedKey = "pausedElapsed"
     /// iOS keeps at most 64 pending notifications per app.
     private static let maxPending = 64
 
     @ObservationIgnored private var notificationWork: Task<Void, Never>?
+    @ObservationIgnored private var pendingWidgetReload: Task<Void, Never>?
     @ObservationIgnored private let chime = ChimePlayer()
 
     /// Read from the notification settings each time a session begins or the app returns to the
@@ -21,12 +21,14 @@ final class PlatformSession: TimerSession {
 
     /// Scheduled notifications outlive the process, so a relaunch resumes the running session.
     var restoredStart: Date? {
-        UserDefaults.standard.object(forKey: Self.startKey) as? Date
+        if case .running(let start) = SessionStore.shared.state { return start }
+        return nil
     }
 
     /// A paused session has no notifications, so only its elapsed time needs to survive.
     var restoredPausedElapsed: TimeInterval? {
-        UserDefaults.standard.object(forKey: Self.pausedElapsedKey) as? TimeInterval
+        if case .paused(let elapsed) = SessionStore.shared.state { return elapsed }
+        return nil
     }
 
     /// While backgrounded, the notification plays the sound.
@@ -34,22 +36,21 @@ final class PlatformSession: TimerSession {
         UIApplication.shared.applicationState != .background
     }
 
-    /// Only one of the two keys is set at a time, so a relaunch never sees both a running and a
-    /// paused session.
+    /// The widget reads the store, so every state change reloads its timeline.
     func began(start: Date, cycle: Cycle) {
-        UserDefaults.standard.set(start, forKey: Self.startKey)
-        UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
+        SessionStore.shared.save(.running(start: start))
+        WidgetCenter.shared.reloadAllTimelines()
         replaceNotifications(start: start, cycle: cycle)
     }
 
     func paused(elapsed: TimeInterval) {
-        UserDefaults.standard.set(elapsed, forKey: Self.pausedElapsedKey)
-        UserDefaults.standard.removeObject(forKey: Self.startKey)
+        SessionStore.shared.save(.paused(elapsed: elapsed))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func ended() {
-        UserDefaults.standard.removeObject(forKey: Self.startKey)
-        UserDefaults.standard.removeObject(forKey: Self.pausedElapsedKey)
+        SessionStore.shared.save(.stopped)
+        WidgetCenter.shared.reloadAllTimelines()
         chime.stop()
         replaceNotifications(start: nil, cycle: nil)
     }
@@ -59,7 +60,16 @@ final class PlatformSession: TimerSession {
     }
 
     func show(_ position: CyclePosition?, cycle: Cycle) {}
-    func cycleChanged(_ cycle: Cycle) {}
+
+    /// WidgetKit budgets reloads, so wait for the scrolling to pause.
+    func cycleChanged(_ cycle: Cycle) {
+        pendingWidgetReload?.cancel()
+        pendingWidgetReload = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
 
     /// Runs after the previous replacement finishes, so a quick stop/start cannot interleave.
     private func replaceNotifications(start: Date?, cycle: Cycle?) {
