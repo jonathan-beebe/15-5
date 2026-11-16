@@ -21,4 +21,7 @@ final class RecordingSession: TimerSession {
     func paused(elapsed: TimeInterval) { events.append(.paused(elapsed: elapsed)) }
     func ended() { events.append(.ended) }
     func alert(entering phase: Phase) { events.append(.alert(phase)) }
+    /// Display updates happen on every tick, so recording them would bury the other events.
+    func show(_ position: CyclePosition?, cycle: Cycle) {}
+    func cycleChanged(_ cycle: Cycle) {}
 }

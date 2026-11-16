@@ -5,7 +5,7 @@ import Observation
 @Observable
 final class CycleTimer {
     private(set) var position: CyclePosition? {
-        didSet { updateDockIcon() }
+        didSet { session.show(position, cycle: cycle) }
     }
     /// Increments on each alert. The iOS flash overlay animates when this changes.
     private(set) var flashCount = 0
@@ -24,7 +24,7 @@ final class CycleTimer {
     var isRunning: Bool { isActive && !isPaused }
 
     private(set) var cycle: Cycle {
-        didSet { scheduleDockIconUpdate() }
+        didSet { session.cycleChanged(cycle) }
     }
 
     /// Elapsed time comes from the continuous clock, which keeps counting through sleep and holds
@@ -34,14 +34,13 @@ final class CycleTimer {
     @ObservationIgnored private var pausedElapsed: TimeInterval?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let saveCycle: (Cycle) -> Void
-    @ObservationIgnored private var pendingDockIconUpdate: Task<Void, Never>?
     @ObservationIgnored private let session: any TimerSession
 
     init(launchOptions: LaunchOptions = .current, session: any TimerSession = PlatformSession()) {
         cycle = launchOptions.cycle
         saveCycle = launchOptions.saveCycle
         self.session = session
-        updateDockIcon()
+        session.show(nil, cycle: cycle)
         if launchOptions.autostart {
             play()
         } else if let restored = session.restoredStart {
@@ -102,25 +101,6 @@ final class CycleTimer {
         if let pausedElapsed { return pausedElapsed }
         guard let startInstant else { return 0 }
         return (clock.now - startInstant).seconds
-    }
-
-    private func updateDockIcon() {
-        #if os(macOS)
-        pendingDockIconUpdate?.cancel()
-        DockIcon.show(position, cycle: cycle)
-        #endif
-    }
-
-    /// Setting the Dock icon is slow enough to lag a scroll, so wait for the scrolling to pause.
-    private func scheduleDockIconUpdate() {
-        #if os(macOS)
-        pendingDockIconUpdate?.cancel()
-        pendingDockIconUpdate = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled else { return }
-            self?.updateDockIcon()
-        }
-        #endif
     }
 
     private func halt() {
