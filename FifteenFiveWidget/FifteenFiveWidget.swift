@@ -18,7 +18,16 @@ struct TimerWidget: Widget {
         }
         .configurationDisplayName("Timer")
         .description("The current phase and the time left in it.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline])
+        .supportedFamilies(Self.families)
+    }
+
+    /// The Lock Screen families exist on iOS only.
+    private static var families: [WidgetFamily] {
+        #if os(iOS)
+        [.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline]
+        #else
+        [.systemSmall, .systemMedium]
+        #endif
     }
 }
 

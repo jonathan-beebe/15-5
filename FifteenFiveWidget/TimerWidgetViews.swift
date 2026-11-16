@@ -49,12 +49,14 @@ struct TimerWidgetView: View {
 
     var body: some View {
         switch family {
+        #if os(iOS)
         case .accessoryCircular:
             CircularView(entry: entry)
         case .accessoryRectangular:
             RectangularView(entry: entry)
         case .accessoryInline:
             InlineView(entry: entry)
+        #endif
         default:
             SystemView(entry: entry, family: family)
         }
@@ -179,6 +181,7 @@ private struct SystemView: View {
     }
 }
 
+#if os(iOS)
 /// Lock Screen circle: a ring filling through the phase around the time left.
 private struct CircularView: View {
     let entry: TimerEntry
@@ -295,6 +298,7 @@ private struct InlineView: View {
         }
     }
 }
+#endif
 
 // MARK: - Previews
 
@@ -323,6 +327,7 @@ extension TimerEntry {
     for entry in TimerEntry.previews { entry }
 }
 
+#if os(iOS)
 #Preview("Circular", as: .accessoryCircular) {
     TimerWidget()
 } timeline: {
@@ -340,3 +345,4 @@ extension TimerEntry {
 } timeline: {
     for entry in TimerEntry.previews { entry }
 }
+#endif
